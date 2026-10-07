@@ -17,6 +17,7 @@
 | P1 | Daily adversarial run (simulation) + CI schedule | ✅ `adversarial/`, `.github/workflows/` |
 | P2 | Birdeye read-only adapter with rate budget reserving quota for exits | ✅ (field mapping **unverified** against the live API) |
 | P1 | **Build step 1:** chain awareness (Solana + Base), per-chain address checks, EVM case normalization, post-graduation-only gate, migration → vanish, one exposure cap across chains | ✅ `chains.py`, `risk.py`, `bot.py`, `tests/test_chains.py` |
+| P1 | **Build step 2:** Jupiter Swap V2 `/order` client (validated quotes, fee-aware), paper venue on LIVE Jupiter prices (re-quotes at landing, expiry on outage), read-only Solana RPC (mint/freeze authority, Token-2022 hazards, holders, signature status), `live_paper` runner | ✅ `venues/jupiter.py`, `data/solana_rpc.py`, `live_paper.py` |
 | P2 | Executable quote source (router) adapter | ❌ not started: needs your venue choice |
 | P2 | On-chain sell simulation, mint-authority read, multi-RPC quorum | ❌ not started |
 | P3 | Live venue adapter | ❌ **intentionally absent** |
@@ -24,7 +25,7 @@
 
 ## Test and replay results (2026-10-07, this container)
 
-- `pytest`: **142 passed**. Covers config, risk gate, execution, protection, circuit breaker, reconciliation/restart, markouts, Birdeye parsing, proposal schema, architecture boundaries, and property-based fault fuzzing. Fuzzing was additionally run under 28 extra Hypothesis seeds, all passing.
+- `pytest`: **172 passed**. Covers config, risk gate, execution, protection, circuit breaker, reconciliation/restart, markouts, Birdeye parsing, proposal schema, architecture boundaries, and property-based fault fuzzing. Fuzzing was additionally run under 28 extra Hypothesis seeds, all passing.
 - Fuzz coverage check (300 random sequences): reached filled entries, stop and emergency exits, failed exits, UNKNOWN orders, and exhausted-exit positions.
 - Daily adversarial run: `reports/adversarial-2026-10-07.md`, **0 invariant violations**, 1 financial-impact finding.
 
@@ -35,6 +36,17 @@
 3. **An exit-failed position was never retried**, even after conditions cleared. Now governed by the explicit `exit_failed_probe_interval_s` (null = operator only). Tests: `test_probe_recovers_after_transient_failure`, `test_operator_only_policy_never_probes`.
 
 4. **(Found in self-review.) An in-flight scale-out was forgotten after a crash and could repeat**, selling more than intended. It could never oversell. The pending scale-out is now rebuilt from the journal (`test_inflight_scale_out_not_repeated_after_restart`).
+
+### Live-paper run on real data (2026-10-07, BONK, $20, keyless Jupiter, public RPC)
+
+- Real quotes: round trip ≈ **35 bps** for $20 (including Jupiter's 10 bps fee each way). Quote round-trip time p50 **~350–380 ms**, p95 ~515–640 ms (measured, not simulated).
+- On-chain safety read from the chain: no mint or freeze authority, classic SPL (tax 0), no hazards.
+- **The gate correctly refused to trade**, because:
+  - the keyless 0.5 req/s budget left no quote for the exact entry size;
+  - the public RPC rate-limits `getTokenLargestAccounts`, so holder concentration is unknown.
+  Both need owner-supplied credentials: `JUPITER_API_KEY` (free) and `SOLANA_RPC_URL` (paid RPC).
+- **Defect found and fixed:** impact-implied liquidity swung ~40% as Jupiter's winning router changed, falsely tripping `LIQUIDITY_COLLAPSE` (it would have forced an emergency exit). Estimated liquidity can no longer trip collapse (`test_estimated_liquidity_swings_do_not_trigger_collapse`). Real liquidity comes from the step-3 feed.
+- Stage and sellability had to be operator-asserted. Without the assertions the gate rejects, which is correct and tested.
 
 ### Owner rules added: 10% stop, 30% profit floor
 

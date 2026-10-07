@@ -90,6 +90,7 @@ class TokenSafety:
     ts_ms: int
     chain: Optional[str] = None  # "solana" | "base"; None = unknown -> reject
     venue_stage: Optional[str] = None  # chains.STAGES; None = unknown -> reject
+    hazards: tuple[str, ...] = ()  # e.g. Token-2022 PERMANENT_DELEGATE; any hazard -> reject
 
 
 @dataclass(frozen=True)
@@ -102,6 +103,7 @@ class MarketSnapshot:
     bid: Optional[Quote]  # executable sell quote for the reference size
     ask: Optional[Quote]  # executable buy quote for the reference size
     priority_fee_lamports: Optional[int] = None
+    liquidity_is_estimate: bool = False  # True: derived (e.g. from price impact), not a pool reading
 
     def age_ms(self, now_ms: int) -> int:
         return now_ms - self.ts_source_ms

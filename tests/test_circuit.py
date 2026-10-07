@@ -99,3 +99,21 @@ def test_emergency_exit_banks_profit_below_30pct_before_collapse():
     assert p.qty == 0, "emergency exit must not be blocked by the 30% profit floor"
     assert p.realized_pnl_usd > 0  # profit banked before the collapse
     assert any(o.purpose is Purpose.EMERGENCY and o.fills for o in s.bot.engine.orders.values())
+
+
+def test_estimated_liquidity_swings_do_not_trigger_collapse():
+    """Live-paper finding 2026-10-07: impact-implied liquidity swung ~40% as Jupiter's
+    router changed, falsely tripping LIQUIDITY_COLLAPSE. Estimates must not trip it."""
+    import dataclasses
+    from tradebot.circuit_breaker import CircuitBreaker
+    s = Sim()
+    cb = CircuitBreaker(s.cfg)
+    snap = s.snapshot()
+    now = s.clock.now_ms()
+    est = dataclasses.replace(snap, liquidity_is_estimate=True)
+    assert cb.observe(est, TOKEN, now) == []
+    assert cb.observe(dataclasses.replace(est, liquidity_usd=est.liquidity_usd * Decimal("0.4")), TOKEN, now) == []
+    cb2 = CircuitBreaker(s.cfg)
+    cb2.observe(snap, TOKEN, now)
+    real_drop = cb2.observe(dataclasses.replace(snap, liquidity_usd=snap.liquidity_usd * Decimal("0.4")), TOKEN, now)
+    assert "LIQUIDITY_COLLAPSE" in real_drop  # real readings still trip it

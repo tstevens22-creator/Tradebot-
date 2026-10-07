@@ -4,6 +4,7 @@ Triggers (per token, over a rolling ``vanish_window_s`` window):
   ADVERSE_MOVE      executable bid fell >= vanish_adverse_move_pct from window high
   SPREAD_EXPANSION  round-trip quote cost >= vanish_spread_bps
   LIQUIDITY_COLLAPSE liquidity fell >= vanish_liquidity_drop_pct from window high
+                    (only for real pool readings; estimated liquidity is ignored here)
   VOLATILITY        (max-min)/min of bid over window >= vanish_volatility_bps
   STALE_DATA        snapshot older than max_data_age_ms, or no executable bid
   SIGNAL_INVALIDATED explicit invalidation from the strategy
@@ -67,6 +68,8 @@ class CircuitBreaker:
         liqs = [x for _, _, x in st.hist if x is not None]
         if liq is None:
             trig.append("STALE_DATA")
+        elif snap.liquidity_is_estimate:
+            pass  # estimates are too noisy to call a collapse (live-paper finding 2026-10-07)
         elif liqs and max(liqs) > 0 and (max(liqs) - liq) / max(liqs) >= c.vanish_liquidity_drop_pct:
             trig.append("LIQUIDITY_COLLAPSE")
         return trig

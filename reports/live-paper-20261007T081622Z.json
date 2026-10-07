@@ -1,0 +1,51 @@
+{
+  "mint": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+  "usd": "20",
+  "seconds": 80,
+  "ticks": 10,
+  "config_hash": "9521146fbc817052",
+  "mode": "PAPER on live Jupiter quotes; nothing signed or sent",
+  "warnings": [
+    "Keyless Jupiter (0.5 req/s): ticks every 8.0s, data-age limit relaxed to 20000 ms (production: 3000 ms with an API key).",
+    "Liquidity is an ESTIMATE implied from quote price impact (real feed comes in step 3)."
+  ],
+  "operator_assertions": [
+    "stage=amm (graduated) asserted by operator; launchpad feed not built yet",
+    "sellable asserted by operator; on-chain sell simulation not built yet"
+  ],
+  "onchain_safety": {
+    "decimals": 5,
+    "mint_authority": false,
+    "freeze_authority": false,
+    "transfer_tax_bps": "0",
+    "top10_holder_pct": "None",
+    "hazards": []
+  },
+  "decision": {
+    "approved": false,
+    "reasons": [
+      "LOW_LIQUIDITY: 42297.74013372363243075712374 < 50000",
+      "NO_EXEC_QUOTE: need executable quote for the exact size",
+      "HOLDER_CONCENTRATION: None"
+    ],
+    "planned_loss_usd": "2.1650"
+  },
+  "fills": [],
+  "position_qty": "0",
+  "realized_pnl_usd": "0.000000",
+  "unrealized_at_last_bid_usd": null,
+  "last_round_trip_bps": "34.53",
+  "quote_rtt_ms": {
+    "n": 20,
+    "p50": 349,
+    "p95": 639,
+    "p99": 654
+  },
+  "bot_latency": {},
+  "halts": [
+    "VANISH:DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"
+  ],
+  "errors": [],
+  "markouts": {},
+  "markout_rows": []
+}

@@ -32,6 +32,9 @@ tradebot/
   latency.py          p50/p95/p99 + budget misses
   data/birdeye.py     read-only Birdeye adapter (indicative data)
   venues/paper_dex.py simulated AMM with fault injection
+  venues/jupiter.py   Jupiter Swap V2 quotes + paper venue on live prices
+  data/solana_rpc.py  read-only on-chain token safety and tx status
+  live_paper.py       paper-trade a real token on live data
   adversarial/        daily scenario runner + report
 ```
 
@@ -40,6 +43,9 @@ tradebot/
 pip install -r requirements-dev.txt
 python -m pytest -q
 python -m tradebot.adversarial.daily --out reports
+# paper trading on LIVE Jupiter prices (nothing is signed or sent):
+python -m tradebot.live_paper --mint <SOLANA_MINT> --usd 20 --seconds 90
 ```
+Optional env: `JUPITER_API_KEY` (free; keyless is 0.5 req/s), `SOLANA_RPC_URL` (paid RPC recommended).
 
 Secrets (e.g. `BIRDEYE_API_KEY`) come from the environment only. The config loader rejects key-like fields.

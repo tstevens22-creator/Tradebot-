@@ -23,6 +23,7 @@ placeholders, **not recommendations**.
    - **Rule:** the quote must come from the same path that executes. A quote from one router is not executable on another.
    - **Open (2a):** include Coinbase Advanced as a third venue for listed coins?
 3. Transaction submission path: public RPC, a private/MEV-protected relay, or a bundle service? How many RPCs for reconciliation quorum?
+   **Build-step-2 proposal:** Solana via Jupiter `/order` + `/execute` (Jupiter lands and retries). The bot journals the signature before `/execute` and reconciles via its own RPC (`getSignatureStatuses`). **Needed from owner:** a free `JUPITER_API_KEY` (keyless is 0.5 req/s, too slow to protect positions) and a paid `SOLANA_RPC_URL` (the public RPC rate-limits holder lookups).
 4. Is there an existing strategy/signal codebase to integrate? Please attach it. Nothing has been audited yet because the repo was empty.
 
 ## B. Risk limits (all required)

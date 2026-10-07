@@ -104,6 +104,8 @@ def authorize(cfg: RiskConfig, p: TradeProposal, ctx: RiskContext) -> Decision:
     else:
         if safety.decimals is None:
             r.append("UNKNOWN_DECIMALS")
+        if safety.hazards:
+            r.append(f"TOKEN_HAZARD: {', '.join(safety.hazards)}")
         if cfg.reject_mint_authority and safety.mint_authority is not False:
             r.append(f"MINT_AUTHORITY: {safety.mint_authority}")
         if cfg.reject_freeze_authority and safety.freeze_authority is not False:
