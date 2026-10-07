@@ -302,11 +302,17 @@ LIVE_ACK_ENV = "TRADEBOT_LIVE_ACK"
 
 
 def assert_live_allowed(cfg: RiskConfig) -> None:
-    """Live trading requires config authorization AND an operator env ack of
-    the exact config hash. No live venue adapter exists yet, so this always
-    ends in refusal: the gate is in place for when one is added."""
+    """Live trading requires config authorization, an operator env ack of the
+    exact config hash, AND a passing preflight (tradebot.preflight) for that
+    hash from the last 24 h: the owner's "all tests pass, no flaws or leaks"
+    condition. No live venue adapter exists yet, so this still ends in refusal."""
     if cfg.mode != "live":
         return
     if os.environ.get(LIVE_ACK_ENV) != cfg.config_hash:
         raise ConfigError(f"live mode requires {LIVE_ACK_ENV}={cfg.config_hash}")
-    raise ConfigError("no live venue adapter is implemented; live trading is unavailable")
+    from .preflight import LIVE_SIGNER_IMPLEMENTED, preflight_record_ok
+    ok, why = preflight_record_ok(cfg.config_hash)
+    if not ok:
+        raise ConfigError(f"live preflight not passed: {why}")
+    if not LIVE_SIGNER_IMPLEMENTED:
+        raise ConfigError("no live venue adapter is implemented; live trading is unavailable")

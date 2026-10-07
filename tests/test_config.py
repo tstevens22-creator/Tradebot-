@@ -76,8 +76,8 @@ def test_live_always_refused_without_adapter(monkeypatch):
     with pytest.raises(ConfigError, match="TRADEBOT_LIVE_ACK"):
         assert_live_allowed(cfg)
     monkeypatch.setenv("TRADEBOT_LIVE_ACK", cfg.config_hash)
-    with pytest.raises(ConfigError, match="no live venue"):
-        assert_live_allowed(cfg)
+    with pytest.raises(ConfigError, match="preflight|no live venue"):
+        assert_live_allowed(cfg)  # refused at the preflight gate (and the adapter gate behind it)
 
 
 def test_example_config_files():

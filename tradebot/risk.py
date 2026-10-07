@@ -170,11 +170,15 @@ def authorize(cfg: RiskConfig, p: TradeProposal, ctx: RiskContext) -> Decision:
 
     # ---- portfolio limits -------------------------------------------
     today = pf.realized_today(ctx.now_ms)
-    remaining = cfg.daily_loss_limit_usd + today  # today is negative when losing
-    if remaining <= 0:
+    # Risk already committed: every open position and in-flight entry can still
+    # stop out today. Correlated meme coins often do so together.
+    open_risk = (pf.exposure_usd() + ctx.inflight_entry_usd) * cfg.stop_loss_pct
+    remaining = cfg.daily_loss_limit_usd + today - open_risk  # today is negative when losing
+    if cfg.daily_loss_limit_usd + today <= 0:
         r.append(f"DAILY_LOSS_LIMIT: realized today {today}")
     elif planned > remaining:
-        r.append(f"DAILY_LOSS_BUDGET: planned {planned:.2f} > remaining {remaining:.2f}")
+        r.append(f"DAILY_LOSS_BUDGET: planned {planned:.2f} > remaining {remaining:.2f} "
+                 f"(after {open_risk:.2f} committed in open positions)")
     equity = pf.equity(ctx.liquidation_values)
     if pf.drawdown_pct(equity) >= cfg.max_drawdown_pct:
         r.append(f"MAX_DRAWDOWN: {pf.drawdown_pct(equity):.4f}")

@@ -75,6 +75,21 @@ Enforced as code constants (see `03_RISK_SPEC.md`). Baseline scenario: a +25% mo
 
 `detect_to_decision` p50 5 ms / p99 ≈ 5 s. The tail comes from decisions made on stale data during feed-outage scenarios, and it is reported as budget misses. `exit_decision_to_confirm` p50 450 ms. All delays are injected by the simulator, so they say nothing about real-world latency.
 
+## Owner live authorization (2026-10-07) and the preflight gate
+
+The owner authorized live trading **"after all tests have passed with flying colors, no flaws or leaks detected"**. That condition is now code: `python -m tradebot.preflight --config <live.toml>`. Live mode refuses to start without a passing preflight for the exact config hash from the last 24 h, and even then until the live adapter exists.
+
+Preflight result on 2026-10-07: **BLOCKED.** Passing: tests (233/233), adversarial run (0 violations), leak scan (98 files, no secrets; the Jupiter key's value was checked explicitly). Failing:
+1. `live_config`: the live config has not been filled in (checklist items 6–15b).
+2. `operator_ack`: `TRADEBOT_LIVE_ACK` must equal the reviewed config hash.
+3. `credentials`: `CODEX_API_KEY`, `BITQUERY_API_KEY`, a paid `SOLANA_RPC_URL`, `ZEROX_API_KEY` (public RPCs are refused).
+4. `hot_wallet`: dedicated wallet key file outside the repo, mode 600, holding only the risk budget.
+5. `feeds_verified_live`: at least one live-paper run with working Bitquery and Codex feeds.
+6. `paper_soak`: 2,000 live-data ticks in 7 days with no exit failures (107 so far).
+7. `live_capabilities`: live signer + `/execute` + on-chain reconciliation, and sell simulation, are not built.
+
+**Flaw found by this review and fixed:** the daily loss budget ignored risk committed in open positions, so concurrent trades could jointly exceed the daily limit (`test_open_positions_count_against_daily_loss_budget`, which fails on the old code).
+
 ## Readiness verdict
 
 **NOT READY FOR REAL MONEY.** Paper / shadow mode only.

@@ -140,3 +140,19 @@ def test_daily_loss_limit_halts():
     assert "DAILY_LOSS_LIMIT" in s.bot.halts
     d = s.propose(usd="20")
     assert "DAILY_LOSS_LIMIT" in reasons(d) and "HALTED" in reasons(d)
+
+
+def test_open_positions_count_against_daily_loss_budget():
+    """Review finding 2026-10-07: the daily budget ignored open positions, so several
+    concurrent trades could jointly exceed the daily loss limit."""
+    s = ready(daily_loss_limit_usd="30", per_trade_risk_usd="20", max_stressed_loss_usd="60",
+              max_concentration_pct="1", max_position_usd="200", max_total_exposure_usd="600")
+    from tradebot.chains import BASE
+    from tradebot.sim import BASE_TOKEN
+    s.add_token(BASE_TOKEN, BASE)
+    s.run(1)
+    assert s.propose(usd="150").approved  # ~15 committed at a 10% stop
+    s.run(2)
+    d = s.propose(usd="150", token=BASE_TOKEN)  # planned ~16 > 30 - 15 committed (old code: 30 left)
+    assert not d.approved and any("DAILY_LOSS_BUDGET" in r and "committed" in r for r in d.reasons)
+    assert s.propose(usd="60", token=BASE_TOKEN).approved  # a smaller trade still fits
