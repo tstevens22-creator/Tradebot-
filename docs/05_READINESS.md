@@ -23,7 +23,7 @@
 
 ## Test and replay results (2026-10-07, this container)
 
-- `pytest`: **126 passed**. Covers config, risk gate, execution, protection, circuit breaker, reconciliation/restart, markouts, Birdeye parsing, proposal schema, architecture boundaries, and property-based fault fuzzing. Fuzzing was additionally run under 28 extra Hypothesis seeds, all passing.
+- `pytest`: **127 passed**. Covers config, risk gate, execution, protection, circuit breaker, reconciliation/restart, markouts, Birdeye parsing, proposal schema, architecture boundaries, and property-based fault fuzzing. Fuzzing was additionally run under 28 extra Hypothesis seeds, all passing.
 - Fuzz coverage check (300 random sequences): reached filled entries, stop and emergency exits, failed exits, UNKNOWN orders, and exhausted-exit positions.
 - Daily adversarial run: `reports/adversarial-2026-10-07.md`, **0 invariant violations**, 1 financial-impact finding.
 
@@ -42,7 +42,7 @@ Enforced as code constants (see `03_RISK_SPEC.md`). Baseline scenario: a +25% mo
 ### Open findings (need your decision, not code)
 
 - A −35% gap realized a **$35.34** loss on a $100 position, despite the 10% stop. The stressed budget was $30.72 (`stress_gap_multiplier = 3`). Meme coins gap this much routinely. The 10% stop limits planned loss, not gap loss.
-- The volatility breaker (3000 bps over 60 s) is direction-agnostic. A fast pump past +30% trips it and triggers an **emergency** exit instead of a take-profit. A pump followed by a dump inside the window could emergency-sell at less than +30%. That is allowed, because protective exits outrank the profit floor.
+- The volatility breaker (3000 bps over 60 s) is direction-agnostic. A fast pump past +30% trips it and triggers an **emergency** exit instead of a take-profit. A pump followed by a dump inside the window could emergency-sell at less than +30%. That is allowed by owner decision: protective exits outrank the profit floor.
 
 ### Latency (simulated, NOT production)
 

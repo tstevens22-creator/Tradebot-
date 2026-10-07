@@ -80,3 +80,22 @@ def test_late_fill_after_vanish_is_exited():
     buys = [o for o in s.bot.engine.orders.values() if o.side is Side.BUY]
     assert buys[0].fills  # the late fill happened
     assert s.position().qty == 0  # and was exited by the emergency policy
+
+
+def test_emergency_exit_banks_profit_below_30pct_before_collapse():
+    """Owner decision 2026-10-07: protective exits may sell a position that is up
+    less than 30%, because banking profit before a collapse matters more than the
+    profit floor."""
+    s = Sim()
+    s.run(2)
+    s.propose()
+    s.run(2)
+    s.venue.shock(TOKEN, Decimal("0.15"))
+    s.run(65)  # +~14%: held (below the 30% floor), past the volatility window
+    assert s.position().qty > 0
+    s.venue.remove_liquidity(TOKEN, Decimal("0.5"))  # liquidity collapsing
+    s.run(3)
+    p = s.position()
+    assert p.qty == 0, "emergency exit must not be blocked by the 30% profit floor"
+    assert p.realized_pnl_usd > 0  # profit banked before the collapse
+    assert any(o.purpose is Purpose.EMERGENCY and o.fills for o in s.bot.engine.orders.values())

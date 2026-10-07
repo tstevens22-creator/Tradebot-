@@ -11,7 +11,7 @@ placeholders, **not recommendations**.
 4. Is there an existing strategy/signal codebase to integrate? Please attach it. Nothing has been audited yet because the repo was empty.
 
 ## B. Risk limits (all required)
-5. ~~Stop-loss %, take-profit %~~ **Decided:** stop 10% (hard max), no profit-taking below +30% (hard floor). Still open: should emergency/vanish and max-hold exits be allowed to sell a position that is up less than 30%? They currently are, because they are protective.
+5. ~~Stop-loss %, take-profit %~~ **Decided:** stop 10% (hard max), no profit-taking below +30% (hard floor). **Also decided:** emergency/vanish, stop and max-hold exits MAY sell a position that is up less than 30%. Banking profit before a collapse outranks the profit floor.
 6. Trailing stop % (or none), scale-out ladder (or none), max holding time (or none).
 7. Per-trade risk $, max position $, max total exposure $, concentration %, max open positions.
 8. Stress gap multiplier and max stressed loss $. Note: the daily report shows a 35% gap exceeding a 3× multiplier on the 10% stop.

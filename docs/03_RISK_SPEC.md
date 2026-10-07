@@ -14,7 +14,7 @@ Defined in `tradebot/config.py`. No config file or AI proposal can loosen them. 
 | `HARD_MAX_STOP_LOSS_PCT` | **0.10** | `stop_loss_pct` may be tighter than 10%, never wider. The stop fires when the **worse** of price return and net P&L (after estimated exit costs) reaches −10%. |
 | `HARD_MIN_PROFIT_EXIT_PCT` | **0.30** | `take_profit_pct` and every scale-out trigger must be ≥ 30%. At runtime, take-profit, scale-out and trailing-stop sales are blocked until the **worse** of price return and net P&L is ≥ +30%. |
 
-The 30% floor applies only to **profit-taking** exits. It does **not** block protective exits: stop-loss, emergency/vanish exits, max-hold, and exit-failure probes.
+The 30% floor applies only to **profit-taking** exits. It does **not** block protective exits: stop-loss, emergency/vanish exits, max-hold, and exit-failure probes. **Owner decision (2026-10-07):** protective exits may sell below +30% profit, because taking profit before a collapse matters more than the floor. Test: `test_emergency_exit_banks_profit_below_30pct_before_collapse`.
 
 **What −10% does and does not guarantee:** the bot *starts* exiting at −10%. A price gap, a rug, or a failed or slow exit can realize a larger loss. The daily report shows a −35% gap realizing about −35%. No code can prevent that on an AMM.
 
