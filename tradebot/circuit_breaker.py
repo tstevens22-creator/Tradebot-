@@ -7,6 +7,9 @@ Triggers (per token, over a rolling ``vanish_window_s`` window):
   VOLATILITY        (max-min)/min of bid over window >= vanish_volatility_bps
   STALE_DATA        snapshot older than max_data_age_ms, or no executable bid
   SIGNAL_INVALIDATED explicit invalidation from the strategy
+  MIGRATION         held token's liquidity is migrating (e.g. pump.fun graduation);
+                    supplied by the bot as an extra trigger, and it blocks recovery
+                    until the stage is back to AMM
 
 A trip latches. Recovery requires ``recovery_healthy_observations``
 consecutive healthy snapshots AND, if configured, a manual operator ack.
@@ -68,9 +71,10 @@ class CircuitBreaker:
             trig.append("LIQUIDITY_COLLAPSE")
         return trig
 
-    def observe(self, snap: Optional[MarketSnapshot], token: str, now_ms: int) -> list[str]:
+    def observe(self, snap: Optional[MarketSnapshot], token: str, now_ms: int,
+                extra: tuple[str, ...] = ()) -> list[str]:
         """Returns NEW triggers (empty if healthy or already tripped)."""
-        trig = self.check(snap, token, now_ms)
+        trig = self.check(snap, token, now_ms) + [t for t in extra]
         st = self.state(token)
         if trig:
             st.healthy_streak = 0
@@ -87,10 +91,13 @@ class CircuitBreaker:
                 st.hist.clear()  # fresh baseline after recovery
         return []
 
-    def invalidate_signal(self, token: str, now_ms: int) -> None:
+    def trip(self, token: str, trigger: str, now_ms: int) -> None:
         st = self.state(token)
         st.tripped, st.triggers, st.tripped_ms, st.acked, st.healthy_streak = (
-            True, ("SIGNAL_INVALIDATED",), now_ms, False, 0)
+            True, (trigger,), now_ms, False, 0)
+
+    def invalidate_signal(self, token: str, now_ms: int) -> None:
+        self.trip(token, "SIGNAL_INVALIDATED", now_ms)
 
     def ack(self, token: str) -> None:
         self.state(token).acked = True

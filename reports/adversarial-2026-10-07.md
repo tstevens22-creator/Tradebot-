@@ -1,7 +1,7 @@
 # Daily adversarial report: 2026-10-07
 
 **Mode:** SIMULATION ONLY  
-**Scenarios run:** 17  
+**Scenarios run:** 18  
 **Invariant violations:** 0  
 **Harness crashes:** 0
 
@@ -25,8 +25,9 @@
 | failed_exit_txs | ✅ | 0.0000 | 0.0000 | 996.5060 | True | EXIT_FAILED |
 | late_fill_after_vanish | ✅ | -0.5189 | 0.0000 | 0.0000 | False | VANISH |
 | daily_loss_restart | ✅ | -45.5440 | 0.0000 | 0.0000 | False | DAILY_LOSS_LIMIT, VANISH |
+| pumpfun_lifecycle | ✅ | -0.5191 | 0.0000 | 0.0000 | False | VANISH |
 | random_chaos | ✅ | -6.7673 | 0.0000 | 0.0000 | False | VANISH |
-| random_chaos | ✅ | 0.0000 | 0.0000 | 0.0000 | False | VANISH |
+| random_chaos | ✅ | -0.5191 | 0.0000 | 0.0000 | False | VANISH |
 | random_chaos | ✅ | 0.0000 | 0.0000 | 0.0000 | False | VANISH |
 | random_chaos | ✅ | -0.5191 | 0.0000 | 0.0000 | False | VANISH |
 | random_chaos | ✅ | 0.0000 | 0.0000 | 0.0000 | False | VANISH |
@@ -42,30 +43,30 @@
 
 | Metric | n | p50 | p95 | p99 | Budget | Misses |
 |---|---|---|---|---|---|---|
-| decision_to_submit | 20 | 0 | 0 | 0 | 250 | 0 |
-| detect_to_decision | 87 | 5 | 3020 | 6135 | 250 | 5 |
-| exit_decision_to_confirm | 8 | 450 | 450 | 450 | 5000 | 0 |
-| submit_ack | 26 | 50 | 50 | 50 | - | 0 |
-| submit_to_fill | 19 | 450 | 3550 | 3550 | - | 0 |
+| decision_to_submit | 22 | 0 | 0 | 0 | 250 | 0 |
+| detect_to_decision | 89 | 5 | 3020 | 6135 | 250 | 5 |
+| exit_decision_to_confirm | 10 | 450 | 450 | 450 | 5000 | 0 |
+| submit_ack | 30 | 50 | 50 | 50 | - | 0 |
+| submit_to_fill | 23 | 450 | 450 | 3550 | - | 0 |
 
 ## Fill markouts (executable-quote benchmark)
 
 | Horizon | Fills | Unknown | Mean bps | Median bps | Worst bps | Adverse | Violations |
 |---|---|---|---|---|---|---|---|
-| +1s | 21 | 0 | 91.64 | -49.91 | -89.33 | 9 | 0 |
-| +5s | 21 | 4 | -335.63 | -69.67 | -3545.29 | 15 | 0 |
-| +10s | 21 | 9 | -250.84 | -205.04 | -3936.37 | 9 | 0 |
+| +1s | 25 | 0 | 68.97 | -49.91 | -89.33 | 11 | 0 |
+| +5s | 25 | 6 | -36.84 | -69.67 | -3545.29 | 16 | 0 |
+| +10s | 25 | 11 | -114.41 | -205.04 | -5134.14 | 10 | 0 |
 
 ### By purpose (entry vs exit quality)
 
 | Purpose | Horizon | Fills | Unknown | Mean bps | Adverse |
 |---|---|---|---|---|---|
-| EMERGENCY | +1s | 5 | 0 | 552.74 | 4 |
-| EMERGENCY | +5s | 5 | 1 | 799.87 | 3 |
-| EMERGENCY | +10s | 5 | 3 | 2947.83 | 0 |
-| ENTRY | +1s | 12 | 0 | -53.2 | 1 |
-| ENTRY | +5s | 12 | 1 | -800.43 | 10 |
-| ENTRY | +10s | 12 | 4 | -1100.66 | 7 |
+| EMERGENCY | +1s | 7 | 0 | 380.47 | 6 |
+| EMERGENCY | +5s | 7 | 2 | 1654.98 | 3 |
+| EMERGENCY | +10s | 7 | 4 | 4146.03 | 0 |
+| ENTRY | +1s | 14 | 0 | -52.73 | 1 |
+| ENTRY | +5s | 14 | 2 | -739.53 | 11 |
+| ENTRY | +10s | 14 | 5 | -1548.83 | 8 |
 | STOP_LOSS | +1s | 3 | 0 | -50.22 | 3 |
 | STOP_LOSS | +5s | 3 | 2 | -50.21 | 1 |
 | STOP_LOSS | +10s | 3 | 2 | -50.21 | 1 |

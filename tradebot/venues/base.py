@@ -38,6 +38,7 @@ class TxStatus:
 class SwapVenue(Protocol):
     name: str
     is_simulated: bool
+    chains: tuple[str, ...]  # chains this venue can execute on
     tx_expiry_ms: int
 
     def submit_swap(self, order: Order) -> SubmitResult: ...

@@ -96,7 +96,8 @@ def parse_price(token: str, body: dict, received_ms: int) -> IndicativePrice:
     )
 
 
-def parse_security(token: str, body: dict, decimals: Optional[int], received_ms: int) -> TokenSafety:
+def parse_security(token: str, body: dict, decimals: Optional[int], received_ms: int,
+                   chain: Optional[str] = None) -> TokenSafety:
     if not isinstance(body, dict) or body.get("success") is not True or not isinstance(body.get("data"), dict):
         raise BirdeyeError("unexpected token_security response")
     d = body["data"]
@@ -112,6 +113,7 @@ def parse_security(token: str, body: dict, decimals: Optional[int], received_ms:
     return TokenSafety(
         token=token, decimals=decimals, mint_authority=None, freeze_authority=freeze,
         transfer_tax_bps=tax, top10_holder_pct=top10, sell_simulation_ok=None, ts_ms=received_ms,
+        chain=chain, venue_stage=None,  # stage comes from the launchpad feed (Bitquery/Codex), not Birdeye
     )
 
 
@@ -151,4 +153,4 @@ class BirdeyeClient:
 
     def security(self, token: str, decimals: Optional[int]) -> TokenSafety:
         body = self._get("/defi/token_security", {"address": token}, priority=False)
-        return parse_security(token, body, decimals, int(time.time() * 1000))
+        return parse_security(token, body, decimals, int(time.time() * 1000), chain=self.chain)

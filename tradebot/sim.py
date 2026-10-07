@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Any, Optional
 
 from .bot import Bot
+from .chains import SOLANA, STAGE_AMM
 from .clock import SimClock
 from .config import RiskConfig, from_dict
 from .journal import Journal
@@ -12,10 +13,11 @@ from .markout import PoolBenchmarkRecorder
 from .models import MarketSnapshot, Quote, Side, TokenSafety
 from .venues.paper_dex import PaperDexVenue, Pool
 
-TOKEN = "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr"
+TOKEN = "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr"  # Solana mint
+BASE_TOKEN = "0x4ed4e862860bed51a9570b96d89af5e1b0efefed"  # Base ERC-20 (lower-cased)
 
 PAPER_CONFIG: dict[str, Any] = {
-    "mode": "paper", "live_trading_authorized": False,
+    "mode": "paper", "live_trading_authorized": False, "enabled_chains": ["solana", "base"],
     "stop_loss_pct": "0.10", "take_profit_pct": "0.30", "trigger_price_source": "executable_bid",
     "target_basis": "net_pnl", "trailing_stop_pct": "0.10", "max_holding_seconds": 3600,
     "scale_outs": [],
@@ -44,9 +46,10 @@ def paper_config(**overrides: Any) -> RiskConfig:
     return from_dict(d)
 
 
-def safe_token(token: str, ts: int, **kw: Any) -> TokenSafety:
-    base = dict(token=token, decimals=6, mint_authority=False, freeze_authority=False,
-                transfer_tax_bps=Decimal(0), top10_holder_pct=Decimal("0.2"), sell_simulation_ok=True, ts_ms=ts)
+def safe_token(token: str, ts: int, chain: str = SOLANA, **kw: Any) -> TokenSafety:
+    base = dict(token=token, decimals=6 if chain == SOLANA else 18, mint_authority=False, freeze_authority=False,
+                transfer_tax_bps=Decimal(0), top10_holder_pct=Decimal("0.2"), sell_simulation_ok=True, ts_ms=ts,
+                chain=chain, venue_stage=STAGE_AMM)
     base.update(kw)
     return TokenSafety(**base)
 
@@ -61,6 +64,8 @@ class Sim:
         self.clock = SimClock()
         self.venue = PaperDexVenue(self.clock, seed=seed)
         self.venue.add_pool(TOKEN, Pool(token_reserve, usd_reserve))
+        self.chain_of: dict[str, str] = {TOKEN: SOLANA}
+        self.stage: dict[str, str] = {}  # per-token lifecycle stage override (default AMM)
         self.journal_path = journal_path
         self.journal = Journal(journal_path, self.cfg.config_hash)
         self.bot = Bot(self.cfg, self.venue, self.journal, self.clock)
@@ -79,24 +84,32 @@ class Sim:
         return MarketSnapshot(token, now, now, p.usd_reserve * 2, p.spot, bid, ask,
                               priority_fee_lamports=self.venue.faults.priority_fee_lamports)
 
-    def step(self, ms: int = 1000, token: str = TOKEN) -> None:
+    def add_token(self, token: str, chain: str, token_reserve: Decimal = Decimal(1_000_000),
+                  usd_reserve: Decimal = Decimal(100_000)) -> None:
+        self.venue.add_pool(token, Pool(token_reserve, usd_reserve))
+        self.chain_of[token] = chain
+
+    def step(self, ms: int = 1000) -> None:
         self.clock.advance(ms)
         self.venue.process()
         if self.feed_up:
-            self.bot.ingest(self.snapshot(token), safe_token(token, self.clock.now_ms(), **self.safety_overrides))
+            for token, chain in self.chain_of.items():
+                kw = {"chain": chain, "venue_stage": self.stage.get(token, STAGE_AMM), **self.safety_overrides}
+                self.bot.ingest(self.snapshot(token), safe_token(token, self.clock.now_ms(), **kw))
         self.recorder.record()
         self.clock.advance(self.decision_delay_ms)
         self.bot.tick()
 
-    def run(self, seconds: int, token: str = TOKEN) -> None:
+    def run(self, seconds: int) -> None:
         for _ in range(seconds):
-            self.step(1000, token)
+            self.step(1000)
 
     _n = 0
 
     def propose(self, usd: str = "100", edge: str = "500", token: str = TOKEN, **extra: Any):
         Sim._n += 1
-        raw = {"proposal_id": f"p{Sim._n}", "token": token, "usd_size": usd, "expected_edge_bps": edge}
+        raw = {"proposal_id": f"p{Sim._n}", "chain": self.chain_of.get(token, SOLANA), "token": token,
+               "usd_size": usd, "expected_edge_bps": edge}
         raw.update(extra)
         return self.bot.propose(raw)
 

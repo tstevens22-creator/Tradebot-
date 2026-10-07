@@ -258,13 +258,31 @@ def daily_loss_restart(seed: int) -> Result:
         return _finish(s, t, r)
 
 
+def pumpfun_lifecycle(seed: int) -> Result:
+    s = Sim(seed=seed); t = Tracker(s)
+    r = Result("pumpfun_lifecycle", "curve token rejected -> graduates -> bought -> liquidity migrates while held")
+    s.stage[TOKEN] = "bonding_curve"; t.step(2)
+    if t.propose().approved:
+        r.violations.append("bought a pump.fun token on the bonding curve")
+    s.stage[TOKEN] = "amm"; t.step(1)
+    if not t.propose().approved:
+        r.notes.append("graduated token was not approved")
+    t.step(2)
+    s.stage[TOKEN] = "migrating"; t.step(3)
+    if not any("MIGRATION" in p["triggers"] for *_, p in s.journal.events("VANISH")):
+        r.violations.append("migration while holding did not trigger vanish")
+    if t.propose().approved:
+        r.violations.append("entry approved during migration")
+    return _finish(s, t, r)
+
+
 def random_chaos(seed: int) -> Result:  # randomized: run with several seeds
     rnd = random.Random(seed)
     s = Sim(seed=seed); t = Tracker(s); r = Result("random_chaos", f"randomized fault sequence (seed {seed})")
     f = s.venue.faults
     t.step(2)
     for _ in range(80):
-        a = rnd.choice(["step", "step", "step", "propose", "down", "gap", "rug", "to", "fail", "feed", "ok"])
+        a = rnd.choice(["step", "step", "step", "propose", "down", "gap", "rug", "to", "fail", "feed", "ok", "stage"])
         if a == "propose": t.propose()
         elif a == "down": s.venue.shock(TOKEN, Decimal("-0.06"))
         elif a == "gap": s.venue.shock(TOKEN, Decimal("-0.3"))
@@ -272,6 +290,7 @@ def random_chaos(seed: int) -> Result:  # randomized: run with several seeds
         elif a == "to": f.submit_timeout_prob, f.status_timeout_prob = 0.6, 0.3
         elif a == "fail": f.tx_fail_prob = 0.7
         elif a == "feed": s.feed_up = not s.feed_up
+        elif a == "stage": s.stage[TOKEN] = rnd.choice(["bonding_curve", "migrating", "amm", "amm"])
         elif a == "ok": f.submit_timeout_prob = f.status_timeout_prob = f.tx_fail_prob = 0.0
         t.step()
     return _finish(s, t, r)
@@ -282,5 +301,5 @@ random_chaos.randomized = True  # type: ignore[attr-defined]
 SCENARIOS: list[Callable[[int], Result]] = [
     baseline, gap_through_stop, submit_timeout_lands, crash_mid_submission, rug_pull, honeypot,
     stale_feed, rate_limit_exhaustion, fee_spike, failed_exit_txs, late_fill_after_vanish,
-    daily_loss_restart, random_chaos,
+    daily_loss_restart, pumpfun_lifecycle, random_chaos,
 ]

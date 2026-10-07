@@ -88,6 +88,8 @@ class TokenSafety:
     top10_holder_pct: Optional[Decimal]
     sell_simulation_ok: Optional[bool]
     ts_ms: int
+    chain: Optional[str] = None  # "solana" | "base"; None = unknown -> reject
+    venue_stage: Optional[str] = None  # chains.STAGES; None = unknown -> reject
 
 
 @dataclass(frozen=True)

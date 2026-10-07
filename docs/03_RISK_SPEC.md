@@ -18,6 +18,13 @@ The 30% floor applies only to **profit-taking** exits. It does **not** block pro
 
 **What −10% does and does not guarantee:** the bot *starts* exiting at −10%. A price gap, a rug, or a failed or slow exit can realize a larger loss. The daily report shows a −35% gap realizing about −35%. No code can prevent that on an AMM.
 
+## Chains and token stage (build step 1)
+
+- `enabled_chains` (required): a subset of `solana`, `base`. Proposals must name their chain. Addresses are validated per chain, and EVM addresses are lower-cased so one token can't become two positions.
+- Entries require the data feed to report the token's chain (it must match the proposal) and its stage as `amm`. `bonding_curve`, `migrating` and unknown are rejected (owner rule: pump.fun post-graduation only).
+- A held token whose stage becomes `migrating` trips the breaker (`MIGRATION`). Recovery waits until the stage is `amm` again.
+- Exposure caps are portfolio-wide across both chains.
+
 ## Settings
 
 All settings live in `tradebot/config.py`. Every one is required, and a missing

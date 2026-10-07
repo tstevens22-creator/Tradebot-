@@ -82,6 +82,7 @@ class _Tx:
 class PaperDexVenue:
     name = "paper-dex"
     is_simulated = True
+    chains: tuple[str, ...] = ("solana", "base")  # simulation stands in for Jupiter and CDP/0x
 
     def __init__(self, clock: SimClock, seed: int = 0, tx_expiry_ms: int = 60_000):
         self.clock = clock

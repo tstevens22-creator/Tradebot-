@@ -3,7 +3,7 @@ import pytest
 from tradebot.signals import ProposalError, parse_proposal
 from tradebot.sim import TOKEN, Sim
 
-OK = {"proposal_id": "a1", "token": TOKEN, "usd_size": "50", "expected_edge_bps": "300"}
+OK = {"proposal_id": "a1", "chain": "solana", "token": TOKEN, "usd_size": "50", "expected_edge_bps": "300"}
 
 
 def test_valid():

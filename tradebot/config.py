@@ -19,6 +19,8 @@ from dataclasses import dataclass, fields
 from decimal import Decimal
 from typing import Any, Optional
 
+from .chains import CHAINS
+
 MODES = ("paper", "shadow", "live")
 TRIGGER_SOURCES = ("executable_bid", "indicative")
 TARGET_BASES = ("price_return", "net_pnl")
@@ -55,6 +57,9 @@ class RiskConfig:
     # --- mode -----------------------------------------------------------
     mode: str
     live_trading_authorized: bool
+
+    # --- chains ---------------------------------------------------------
+    enabled_chains: tuple[str, ...]
 
     # --- stop / target --------------------------------------------------
     stop_loss_pct: Decimal
@@ -159,6 +164,9 @@ def _validate(c: RiskConfig) -> None:
             errs.append(msg)
 
     req(c.mode in MODES, f"mode must be one of {MODES}")
+    req(len(c.enabled_chains) > 0 and all(ch in CHAINS for ch in c.enabled_chains)
+        and len(set(c.enabled_chains)) == len(c.enabled_chains),
+        f"enabled_chains must be a non-empty list drawn from {CHAINS}")
     req(c.trigger_price_source in TRIGGER_SOURCES, f"trigger_price_source must be one of {TRIGGER_SOURCES}")
     req(c.target_basis in TARGET_BASES, f"target_basis must be one of {TARGET_BASES}")
     req(c.vanish_emergency_policy in VANISH_POLICIES, f"vanish_emergency_policy must be one of {VANISH_POLICIES}")
@@ -257,6 +265,8 @@ def from_dict(raw: dict[str, Any]) -> RiskConfig:
             vals[n] = tuple(ScaleOut(Decimal(str(t)), Decimal(str(f))) for t, f in v)
         elif n == "exit_slippage_ladder_bps":
             vals[n] = tuple(Decimal(str(x)) for x in v)
+        elif n == "enabled_chains":
+            vals[n] = tuple(str(x) for x in v)
         elif n == "markout_horizons_s":
             vals[n] = tuple(int(x) for x in v)
         elif n in _DECIMAL_FIELDS:

@@ -7,6 +7,7 @@
 mode = "live"
 live_trading_authorized = false   # must be set to true by the owner, deliberately
 
+# enabled_chains = ["solana", "base"]   # owner decision 2026-10-07; needs live adapters per chain
 trigger_price_source = "executable_bid"   # indicative is forbidden in live
 target_basis = "net_pnl"
 

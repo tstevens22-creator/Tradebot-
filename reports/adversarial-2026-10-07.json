@@ -1,7 +1,7 @@
 {
   "date": "2026-10-07",
   "mode": "SIMULATION ONLY",
-  "scenarios_run": 17,
+  "scenarios_run": 18,
   "harness_crashes": [],
   "findings": [
     {
@@ -169,6 +169,19 @@
       "notes": []
     },
     {
+      "scenario": "pumpfun_lifecycle",
+      "description": "curve token rejected -> graduates -> bought -> liquidity migrates while held",
+      "passed": true,
+      "realized_pnl_usd": "-0.5191",
+      "planned_loss_usd": "0.0000",
+      "residual_qty": "0E-25",
+      "unprotected": false,
+      "halts": [
+        "VANISH:7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr"
+      ],
+      "notes": []
+    },
+    {
       "scenario": "random_chaos",
       "description": "randomized fault sequence (seed 543394934)",
       "passed": true,
@@ -185,9 +198,9 @@
       "scenario": "random_chaos",
       "description": "randomized fault sequence (seed 2252141399)",
       "passed": true,
-      "realized_pnl_usd": "0.0000",
+      "realized_pnl_usd": "-0.5191",
       "planned_loss_usd": "0.0000",
-      "residual_qty": "0",
+      "residual_qty": "0E-25",
       "unprotected": false,
       "halts": [
         "VANISH:7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr"
@@ -236,7 +249,7 @@
   ],
   "latency_ms": {
     "decision_to_submit": {
-      "n": 20,
+      "n": 22,
       "p50": 0,
       "p95": 0,
       "p99": 0,
@@ -244,7 +257,7 @@
       "budget_misses": 0
     },
     "detect_to_decision": {
-      "n": 87,
+      "n": 89,
       "p50": 5,
       "p95": 3020,
       "p99": 6135,
@@ -252,7 +265,7 @@
       "budget_misses": 5
     },
     "exit_decision_to_confirm": {
-      "n": 8,
+      "n": 10,
       "p50": 450,
       "p95": 450,
       "p99": 450,
@@ -260,7 +273,7 @@
       "budget_misses": 0
     },
     "submit_ack": {
-      "n": 26,
+      "n": 30,
       "p50": 50,
       "p95": 50,
       "p99": 50,
@@ -268,9 +281,9 @@
       "budget_misses": 0
     },
     "submit_to_fill": {
-      "n": 19,
+      "n": 23,
       "p50": 450,
-      "p95": 3550,
+      "p95": 450,
       "p99": 3550,
       "budget_ms": null,
       "budget_misses": 0
@@ -278,58 +291,58 @@
   },
   "markout_summary": {
     "+1s": {
-      "fills": 21,
+      "fills": 25,
       "unknown": 0,
-      "mean_bps": 91.64,
+      "mean_bps": 68.97,
       "median_bps": -49.91,
       "worst_bps": -89.33,
-      "adverse": 9,
+      "adverse": 11,
       "violations": 0
     },
     "+5s": {
-      "fills": 21,
-      "unknown": 4,
-      "mean_bps": -335.63,
+      "fills": 25,
+      "unknown": 6,
+      "mean_bps": -36.84,
       "median_bps": -69.67,
       "worst_bps": -3545.29,
-      "adverse": 15,
+      "adverse": 16,
       "violations": 0
     },
     "+10s": {
-      "fills": 21,
-      "unknown": 9,
-      "mean_bps": -250.84,
+      "fills": 25,
+      "unknown": 11,
+      "mean_bps": -114.41,
       "median_bps": -205.04,
-      "worst_bps": -3936.37,
-      "adverse": 9,
+      "worst_bps": -5134.14,
+      "adverse": 10,
       "violations": 0
     }
   },
   "markout_by_purpose": {
     "EMERGENCY": {
       "+1s": {
-        "fills": 5,
+        "fills": 7,
         "unknown": 0,
-        "mean_bps": 552.74,
+        "mean_bps": 380.47,
         "median_bps": -50.21,
         "worst_bps": -50.44,
-        "adverse": 4,
+        "adverse": 6,
         "violations": 0
       },
       "+5s": {
-        "fills": 5,
-        "unknown": 1,
-        "mean_bps": 799.87,
-        "median_bps": -50.34,
+        "fills": 7,
+        "unknown": 2,
+        "mean_bps": 1654.98,
+        "median_bps": -50.24,
         "worst_bps": -60.25,
         "adverse": 3,
         "violations": 0
       },
       "+10s": {
-        "fills": 5,
-        "unknown": 3,
-        "mean_bps": 2947.83,
-        "median_bps": 2947.83,
+        "fills": 7,
+        "unknown": 4,
+        "mean_bps": 4146.03,
+        "median_bps": 5352.29,
         "worst_bps": 543.37,
         "adverse": 0,
         "violations": 0
@@ -337,30 +350,30 @@
     },
     "ENTRY": {
       "+1s": {
-        "fills": 12,
+        "fills": 14,
         "unknown": 0,
-        "mean_bps": -53.2,
+        "mean_bps": -52.73,
         "median_bps": -49.91,
         "worst_bps": -89.33,
         "adverse": 1,
         "violations": 0
       },
       "+5s": {
-        "fills": 12,
-        "unknown": 1,
-        "mean_bps": -800.43,
-        "median_bps": -748.37,
+        "fills": 14,
+        "unknown": 2,
+        "mean_bps": -739.53,
+        "median_bps": -539.47,
         "worst_bps": -3545.29,
-        "adverse": 10,
+        "adverse": 11,
         "violations": 0
       },
       "+10s": {
-        "fills": 12,
-        "unknown": 4,
-        "mean_bps": -1100.66,
+        "fills": 14,
+        "unknown": 5,
+        "mean_bps": -1548.83,
         "median_bps": -1044.92,
-        "worst_bps": -3936.37,
-        "adverse": 7,
+        "worst_bps": -5134.14,
+        "adverse": 8,
         "violations": 0
       }
     },
@@ -425,8 +438,8 @@
   },
   "markout_rows_sample": [
     {
-      "fill_id": "sig_d98a92a68d72c33989cd47a6",
-      "client_order_id": "e-27854877d82d4c85",
+      "fill_id": "sig_147d70d9618a52fcc45cd76c",
+      "client_order_id": "e-7ea800fb89c8464a",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -451,11 +464,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_d98a92a68d72c33989cd47a6",
-      "client_order_id": "e-27854877d82d4c85",
+      "fill_id": "sig_147d70d9618a52fcc45cd76c",
+      "client_order_id": "e-7ea800fb89c8464a",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -480,11 +493,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_d98a92a68d72c33989cd47a6",
-      "client_order_id": "e-27854877d82d4c85",
+      "fill_id": "sig_147d70d9618a52fcc45cd76c",
+      "client_order_id": "e-7ea800fb89c8464a",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -509,11 +522,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_a7a3f10df2aef825dd1eb708",
-      "client_order_id": "x-eaefdb9142d54614",
+      "fill_id": "sig_4df2a2249f0f4daba1d31437",
+      "client_order_id": "x-5807390349ed4058",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
@@ -538,11 +551,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_a7a3f10df2aef825dd1eb708",
-      "client_order_id": "x-eaefdb9142d54614",
+      "fill_id": "sig_4df2a2249f0f4daba1d31437",
+      "client_order_id": "x-5807390349ed4058",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
@@ -567,11 +580,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_a7a3f10df2aef825dd1eb708",
-      "client_order_id": "x-eaefdb9142d54614",
+      "fill_id": "sig_4df2a2249f0f4daba1d31437",
+      "client_order_id": "x-5807390349ed4058",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
@@ -596,11 +609,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_1cb9217f055cfe5c78249248",
-      "client_order_id": "e-6dd9473b72394eb5",
+      "fill_id": "sig_be4dc5a230ca1620ed4e54a2",
+      "client_order_id": "e-2a44a55dd25c462c",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -625,11 +638,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_1cb9217f055cfe5c78249248",
-      "client_order_id": "e-6dd9473b72394eb5",
+      "fill_id": "sig_be4dc5a230ca1620ed4e54a2",
+      "client_order_id": "e-2a44a55dd25c462c",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -654,11 +667,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_1cb9217f055cfe5c78249248",
-      "client_order_id": "e-6dd9473b72394eb5",
+      "fill_id": "sig_be4dc5a230ca1620ed4e54a2",
+      "client_order_id": "e-2a44a55dd25c462c",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -683,11 +696,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_65e54ba40d222e6b19454bd9",
-      "client_order_id": "x-442a4b25887b4d23",
+      "fill_id": "sig_b204084f5a07da90af06615a",
+      "client_order_id": "x-5a7ac76c534a4e9f",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
@@ -712,11 +725,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_65e54ba40d222e6b19454bd9",
-      "client_order_id": "x-442a4b25887b4d23",
+      "fill_id": "sig_b204084f5a07da90af06615a",
+      "client_order_id": "x-5a7ac76c534a4e9f",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
@@ -741,11 +754,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     },
     {
-      "fill_id": "sig_65e54ba40d222e6b19454bd9",
-      "client_order_id": "x-442a4b25887b4d23",
+      "fill_id": "sig_b204084f5a07da90af06615a",
+      "client_order_id": "x-5a7ac76c534a4e9f",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
@@ -770,7 +783,7 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "791f2fbb51a5c16b"
+      "config_hash": "9bc251d725cf56a4"
     }
   ],
   "remaining_uncertainty": [

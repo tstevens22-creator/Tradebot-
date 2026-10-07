@@ -74,22 +74,22 @@ or data, so it cannot be tested in paper mode.
 
 ## F. Venue-specific additions (owner venue answer, 2026-10-07)
 
-**Not yet implemented.** These must be built and tested before any venue goes live.
+Implemented in build step 1 (paper): **F1, F2, F9, F10**, tested in `tests/test_chains.py` and the `pumpfun_lifecycle` daily scenario. All others are **not yet implemented** and must be built and tested before any venue goes live.
 
 | # | Failure | Trigger | Loss | Sev | Prevention / detection | Test (to write) | Residual |
 |---|---|---|---|---|---|---|---|
-| F1 | Buying on a pump.fun bonding curve | Signal fires before graduation | Dev dump / rug in the earliest, thinnest phase | C | Gate requires a verified **graduated** stage; unknown stage = reject | `test_rejects_bonding_curve_tokens` | Stage data wrong or late |
-| F2 | Graduation/migration while holding | Liquidity moves pools mid-position | Exit route breaks; quotes vanish | H | Migration event → vanish; exits re-quoted via the aggregator | `test_migration_triggers_vanish` | Gap during migration |
+| F1 | Buying on a pump.fun bonding curve | Signal fires before graduation | Dev dump / rug in the earliest, thinnest phase | C | Gate requires a verified **graduated** stage; unknown stage = reject | `test_rejects_bonding_curve_migrating_and_unknown_stage` ✅ | Stage data wrong or late |
+| F2 | Graduation/migration while holding | Liquidity moves pools mid-position | Exit route breaks; quotes vanish | H | Migration event → vanish; exits re-quoted via the aggregator | `test_migration_triggers_vanish_and_blocks_recovery_until_amm` ✅ | Gap during migration |
 | F3 | Signal is engineered hype | Coordinated pumps trend on FOMO/Coinbase | Buying the top of a pump-and-dump | H | Gate ignores popularity: liquidity, holders, token age, sellability. Markouts track it. | strategy review | High: trending ≠ edge |
 | F4 | Trending feed stale or wrong | Upstream lag or API error | Late entries | M | Signal freshness limit; signal source recorded on every proposal | `test_stale_signal_rejected` | — |
 | F5 | **Base: unlimited token approval** | Router approval left open | Drained wallet if the router or spender is compromised | C | Exact-amount approvals only; revoke after exit | `test_exact_approvals` | Approval-race edge cases |
 | F6 | **Base: nonce gaps / stuck tx** | Gas too low, crash between nonces | Later txs (including exits) blocked behind a stuck one | C | Nonce manager journaled write-ahead. A pending EVM tx **can** be replaced or cancelled with the same nonce and a higher fee, unlike Solana. Replacement is still UNKNOWN until mined. | `test_nonce_replacement_is_unknown_until_mined` | Both txs racing |
 | F7 | **Base: honeypots / sell taxes** | Contract-level sell blocks and fee-on-transfer, common on EVM | 100% loss or hidden tax | C | Mandatory sell simulation (eth_call) of the exact size; tax measured, not trusted | `test_base_sell_simulation_required` | Tax changed after entry |
 | F8 | **Base: sequencer outage / reorg** | L2 sequencer down, or a reorg | Exits impossible; fills reversed | H | Sequencer health → vanish; fills final only after N confirmations | `test_sequencer_down_vanish` | Full position while down |
-| F9 | Cross-chain correlated exposure | Same narrative pumps on Solana and Base | Exposure cap per chain looks fine, total doesn't | H | Total-exposure cap spans both chains (one portfolio) | `test_exposure_cap_cross_chain` | — |
+| F9 | Cross-chain correlated exposure | Same narrative pumps on Solana and Base | Exposure cap per chain looks fine, total doesn't | H | Total-exposure cap spans both chains (one portfolio) | `test_exposure_cap_cross_chain` ✅ | — |
 | F11 | Serial-rugger creator | Creator wallet with a history of dead tokens launches again and it graduates | Dump right after graduation | H | Creator-reputation gate (launch count, graduated-to-dead ratio); unknown = reject | `test_rejects_serial_rugger_creator` | Clean history built up deliberately, or a fresh creator wallet |
 | F12 | Signal-feed outage or disagreement | Bitquery lags or drops events; Codex disagrees | Missed graduations, or trades on wrong data | M | Two-source cross-check; a silent primary or disagreement = block entries on that token; feed lag is measured | `test_feed_disagreement_blocks_entry` | Both feeds wrong in the same way |
-| F10 | Wrong-chain address | A 0x address sent to the Solana path, or vice versa | Failed or misrouted trades | M | Proposals carry an explicit `chain`; the address format is validated per chain | `test_chain_address_validation` | — |
+| F10 | Wrong-chain address | A 0x address sent to the Solana path, or vice versa | Failed or misrouted trades | M | Proposals carry an explicit `chain`; the address format is validated per chain | `test_chain_address_validation`, `test_evm_checksum_case_maps_to_one_token` ✅ | — |
 
 ## Residual risk code cannot eliminate
 

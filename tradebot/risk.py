@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional
 
+from .chains import STAGE_AMM, STAGE_BONDING_CURVE, STAGE_MIGRATING
 from .config import RiskConfig
 from .models import BPS, MarketSnapshot, Quote, TokenSafety
 from .portfolio import Portfolio
@@ -29,6 +30,7 @@ class RiskContext:
     unresolved_orders_on_token: int
     last_stop_ms: Optional[int]
     est_network_fee_usd: Decimal  # entry + exit gas/priority estimate
+    venue_supports_chain: bool
     liquidation_values: dict[str, Decimal] = field(default_factory=dict)
 
 
@@ -58,6 +60,21 @@ def authorize(cfg: RiskConfig, p: TradeProposal, ctx: RiskContext) -> Decision:
         r.append("UNRESOLVED_ORDERS: reconcile in-flight/UNKNOWN orders first")
     if ctx.last_stop_ms is not None and ctx.now_ms - ctx.last_stop_ms < cfg.cooldown_after_stop_s * 1000:
         r.append("COOLDOWN: recent stop-out on token")
+
+    # ---- chain & lifecycle stage --------------------------------------
+    if p.chain not in cfg.enabled_chains:
+        r.append(f"CHAIN_DISABLED: {p.chain}")
+    if not ctx.venue_supports_chain:
+        r.append(f"NO_VENUE_FOR_CHAIN: {p.chain}")
+    if safety is not None and safety.token == p.token:
+        if safety.chain != p.chain:
+            r.append(f"CHAIN_MISMATCH: data says {safety.chain}, proposal says {p.chain}")
+        if safety.venue_stage == STAGE_BONDING_CURVE:
+            r.append("NOT_GRADUATED: pump.fun bonding curve (owner rule: post-graduation only)")
+        elif safety.venue_stage == STAGE_MIGRATING:
+            r.append("MIGRATING: graduation in progress")
+        elif safety.venue_stage != STAGE_AMM:
+            r.append(f"STAGE_UNKNOWN: {safety.venue_stage}")
 
     # ---- data presence & freshness ----------------------------------
     if snap is None or snap.token != p.token:

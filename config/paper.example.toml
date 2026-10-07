@@ -4,6 +4,7 @@
 
 mode = "paper"
 live_trading_authorized = false
+enabled_chains = ["solana", "base"]
 stop_loss_pct = "0.10"
 take_profit_pct = "0.30"
 trigger_price_source = "executable_bid"

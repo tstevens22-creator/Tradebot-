@@ -16,6 +16,7 @@
 | P1 | Fill grading at +1/+5/+10 s, UNKNOWN on missing data, compliance kept separate | ✅ `markout.py` |
 | P1 | Daily adversarial run (simulation) + CI schedule | ✅ `adversarial/`, `.github/workflows/` |
 | P2 | Birdeye read-only adapter with rate budget reserving quota for exits | ✅ (field mapping **unverified** against the live API) |
+| P1 | **Build step 1:** chain awareness (Solana + Base), per-chain address checks, EVM case normalization, post-graduation-only gate, migration → vanish, one exposure cap across chains | ✅ `chains.py`, `risk.py`, `bot.py`, `tests/test_chains.py` |
 | P2 | Executable quote source (router) adapter | ❌ not started: needs your venue choice |
 | P2 | On-chain sell simulation, mint-authority read, multi-RPC quorum | ❌ not started |
 | P3 | Live venue adapter | ❌ **intentionally absent** |
@@ -23,7 +24,7 @@
 
 ## Test and replay results (2026-10-07, this container)
 
-- `pytest`: **127 passed**. Covers config, risk gate, execution, protection, circuit breaker, reconciliation/restart, markouts, Birdeye parsing, proposal schema, architecture boundaries, and property-based fault fuzzing. Fuzzing was additionally run under 28 extra Hypothesis seeds, all passing.
+- `pytest`: **142 passed**. Covers config, risk gate, execution, protection, circuit breaker, reconciliation/restart, markouts, Birdeye parsing, proposal schema, architecture boundaries, and property-based fault fuzzing. Fuzzing was additionally run under 28 extra Hypothesis seeds, all passing.
 - Fuzz coverage check (300 random sequences): reached filled entries, stop and emergency exits, failed exits, UNKNOWN orders, and exhausted-exit positions.
 - Daily adversarial run: `reports/adversarial-2026-10-07.md`, **0 invariant violations**, 1 financial-impact finding.
 

@@ -17,8 +17,9 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-ALLOWED_KEYS = {"proposal_id", "token", "usd_size", "expected_edge_bps", "strategy"}
-_TOKEN_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")  # base58 Solana mint
+from .chains import normalize_address
+
+ALLOWED_KEYS = {"proposal_id", "chain", "token", "usd_size", "expected_edge_bps", "strategy"}
 _ID_RE = re.compile(r"^[A-Za-z0-9_\-:.]{1,64}$")
 
 
@@ -32,6 +33,7 @@ class TradeProposal:
     token: str
     usd_size: Decimal
     expected_edge_bps: Decimal
+    chain: str
     strategy: str = "default"
 
 
@@ -43,6 +45,7 @@ def parse_proposal(raw: Any) -> TradeProposal:
         raise ProposalError(f"proposal contains forbidden keys: {sorted(extra)}")
     try:
         pid = str(raw["proposal_id"])
+        chain = str(raw["chain"])
         token = str(raw["token"])
         size = Decimal(str(raw["usd_size"]))
         edge = Decimal(str(raw["expected_edge_bps"]))
@@ -51,10 +54,12 @@ def parse_proposal(raw: Any) -> TradeProposal:
         raise ProposalError(f"malformed proposal: {e!r}") from None
     if not _ID_RE.match(pid) or not _ID_RE.match(strategy):
         raise ProposalError("invalid proposal_id/strategy")
-    if not _TOKEN_RE.match(token):
-        raise ProposalError("token must be a base58 mint address")
+    try:
+        token = normalize_address(chain, token)
+    except ValueError as e:
+        raise ProposalError(f"invalid token for chain: {e}") from None
     if not size.is_finite() or size <= 0:
         raise ProposalError("usd_size must be > 0")
     if not edge.is_finite():
         raise ProposalError("expected_edge_bps must be finite")
-    return TradeProposal(pid, token, size, edge, strategy)
+    return TradeProposal(pid, token, size, edge, chain, strategy)

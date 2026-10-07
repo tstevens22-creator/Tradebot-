@@ -110,7 +110,7 @@ def test_halted_blocks_everything():
 
 def test_duplicate_proposal_id_rejected():
     s = ready()
-    raw = {"proposal_id": "same", "token": TOKEN, "usd_size": "50", "expected_edge_bps": "500"}
+    raw = {"proposal_id": "same", "chain": "solana", "token": TOKEN, "usd_size": "50", "expected_edge_bps": "500"}
     assert s.bot.propose(raw).approved
     assert "DUPLICATE_PROPOSAL" in reasons(s.bot.propose(raw))
 

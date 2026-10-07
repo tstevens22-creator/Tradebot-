@@ -15,6 +15,7 @@ import uuid
 from decimal import Decimal
 from typing import Any, Optional
 
+from .chains import STAGE_MIGRATING
 from .circuit_breaker import CircuitBreaker
 from .clock import Clock
 from .config import ConfigError, RiskConfig, assert_live_allowed
@@ -104,7 +105,7 @@ class Bot:
         if p.proposal_id in self.seen_proposals:
             return Decision(False, ("DUPLICATE_PROPOSAL",), "", self.cfg.config_hash)
         self.seen_proposals.add(p.proposal_id)
-        self.journal.append(now, "PROPOSAL", {"id": p.proposal_id, "token": p.token,
+        self.journal.append(now, "PROPOSAL", {"id": p.proposal_id, "token": p.token, "chain": p.chain,
                                               "usd": p.usd_size, "edge_bps": p.expected_edge_bps})
         try:
             q = self.venue.quote_buy(p.token, p.usd_size)
@@ -118,6 +119,7 @@ class Bot:
             unresolved_orders_on_token=self.engine.unresolved_count(p.token),
             last_stop_ms=self.last_stop_ms.get(p.token),
             est_network_fee_usd=2 * self.venue.network_fee_usd(),
+            venue_supports_chain=p.chain in getattr(self.venue, "chains", ()),
             liquidation_values=self._liquidation_values(),
         )
         d = authorize(self.cfg, p, ctx)
@@ -147,7 +149,9 @@ class Bot:
 
         held = {p.token for p in self.portfolio.open_positions()}
         for token in sorted(held | set(self.snapshots)):
-            new = self.breaker.observe(self.snapshots.get(token), token, now)
+            stage = self.safety[token].venue_stage if token in self.safety else None
+            extra = ("MIGRATION",) if stage == STAGE_MIGRATING else ()
+            new = self.breaker.observe(self.snapshots.get(token), token, now, extra)
             if new:
                 self._vanish(token, new)
             elif not self.breaker.is_tripped(token) and self.halts.get(f"VANISH:{token}") == AUTO:
