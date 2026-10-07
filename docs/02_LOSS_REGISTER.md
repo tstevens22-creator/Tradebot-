@@ -87,6 +87,7 @@ or data, so it cannot be tested in paper mode.
 | F7 | **Base: honeypots / sell taxes** | Contract-level sell blocks and fee-on-transfer, common on EVM | 100% loss or hidden tax | C | Mandatory sell simulation (eth_call) of the exact size; tax measured, not trusted | `test_base_sell_simulation_required` | Tax changed after entry |
 | F8 | **Base: sequencer outage / reorg** | L2 sequencer down, or a reorg | Exits impossible; fills reversed | H | Sequencer health → vanish; fills final only after N confirmations | `test_sequencer_down_vanish` | Full position while down |
 | F9 | Cross-chain correlated exposure | Same narrative pumps on Solana and Base | Exposure cap per chain looks fine, total doesn't | H | Total-exposure cap spans both chains (one portfolio) | `test_exposure_cap_cross_chain` | — |
+| F11 | Serial-rugger creator | Creator wallet with a history of dead tokens launches again and it graduates | Dump right after graduation | H | Creator-reputation gate (launch count, graduated-to-dead ratio); unknown = reject | `test_rejects_serial_rugger_creator` | Clean history built up deliberately, or a fresh creator wallet |
 | F10 | Wrong-chain address | A 0x address sent to the Solana path, or vice versa | Failed or misrouted trades | M | Proposals carry an explicit `chain`; the address format is validated per chain | `test_chain_address_validation` | — |
 
 ## Residual risk code cannot eliminate

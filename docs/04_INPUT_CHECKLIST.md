@@ -13,6 +13,7 @@ placeholders, **not recommendations**.
      - (1a) **Solana and Base.** Base needs a separate EVM execution adapter, and its risks are in loss register section F.
      - (1b) **pump.fun only after graduation.** Bonding-curve tokens are rejected. A migration in progress triggers vanish.
      - (1d) **FOMO as an execution venue: rejected.** It has no official trading API. App automation would be fragile, likely against its terms, would give no executable quotes and no reconciliation, and would expose credentials. The same tokens are traded directly via Jupiter or 0x.
+     - (1e) **PumpSniper (iOS app): owner's manual discovery tool, no API.** The bot replicates its data from on-chain feeds: new mints, **graduation events** (the entry trigger for post-graduation trading) and **creator history** (Bitquery, Solana Tracker, Codex; to be chosen).
      - (1c) **Signals fully automated.** FOMO signal candidates: Bitquery FOMO API (indexes FOMO trades on-chain; preferred) and unofficial feeds (fomoapi.io, getfomoapi.fun), treated as untrusted. Beware copy-bait wallets (loss register F3). No public trending API was found for FOMO or Coinbase, so an automated stand-in feed is needed (e.g. Birdeye trending/new-listing data on Solana and Base; endpoint to be verified). Automated proposals still pass the deterministic risk gate.
 2. **Executable-quote source. Proposed (2026-10-07); owner suggested Coinbase Advanced:**
    - **Solana:** Jupiter quote + execution (Coinbase's app also routes Solana DEX trades via Jupiter).
@@ -35,6 +36,8 @@ placeholders, **not recommendations**.
 13. Exit ladder, emergency slippage cap, max attempts, backoff, and post-exhaustion probe interval (or operator-only).
 14. Vanish thresholds, emergency policy (`exit_all` / `exit_if_loss` / `hold_protected`), and recovery requirements.
 15. Latency budgets, and markout adverse threshold (frozen before evaluation).
+
+15b. **Creator-reputation filter (proposed):** reject tokens whose creator wallet has a graduated-to-dead ratio below a threshold, or more than N launches in a window. Unknown history = reject. Thresholds needed.
 
 ## C. Operations
 16. Hot-wallet funding cap (a separate wallet holding only the risk budget is strongly recommended).
