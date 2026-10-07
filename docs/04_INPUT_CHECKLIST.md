@@ -9,8 +9,11 @@ placeholders, **not recommendations**.
    Interpretation (to confirm):
    - **Execution:** Solana on-chain. (a) pump.fun **bonding curve** for pre-graduation tokens, and (b) the **Jupiter** aggregator for graduated tokens (PumpSwap and other AMMs). Coinbase's in-app Solana DEX trading also routes via Jupiter.
    - **Signal sources, not venues:** FOMO (a social/copy-trading app; no public trading API found), Coinbase trending/"Launches" (Solana + Base), Birdeye.
-   - **Open:** (1a) include **Base** tokens? Base is an EVM chain and needs a separate execution stack. (1b) trade pump.fun tokens **before** graduation (bonding curve), or only after? (1c) how are FOMO/Coinbase signals captured today: manually, or through some feed?
-2. Which executable-quote source? Birdeye price is indicative only.
+   - **Decided (2026-10-07):**
+     - (1a) **Solana and Base.** Base needs a separate EVM execution adapter, and its risks are in loss register section F.
+     - (1b) **pump.fun only after graduation.** Bonding-curve tokens are rejected. A migration in progress triggers vanish.
+     - (1c) **Signals fully automated.** No public trending API was found for FOMO or Coinbase, so an automated stand-in feed is needed (e.g. Birdeye trending/new-listing data on Solana and Base; endpoint to be verified). Automated proposals still pass the deterministic risk gate.
+2. Which executable-quote source? Birdeye price is indicative only. Proposed: Jupiter quotes (Solana); a Base DEX aggregator or router quote (to be chosen).
 3. Transaction submission path: public RPC, a private/MEV-protected relay, or a bundle service? How many RPCs for reconciliation quorum?
 4. Is there an existing strategy/signal codebase to integrate? Please attach it. Nothing has been audited yet because the repo was empty.
 
