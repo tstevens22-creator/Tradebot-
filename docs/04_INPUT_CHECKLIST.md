@@ -18,7 +18,7 @@ placeholders, **not recommendations**.
      - (1c) **Signals fully automated.** FOMO signal candidates: Bitquery FOMO API (indexes FOMO trades on-chain; preferred) and unofficial feeds (fomoapi.io, getfomoapi.fun), treated as untrusted. Beware copy-bait wallets (loss register F3). No public trending API was found for FOMO or Coinbase, so an automated stand-in feed is needed (e.g. Birdeye trending/new-listing data on Solana and Base; endpoint to be verified). Automated proposals still pass the deterministic risk gate.
 2. **Executable-quote source. Proposed (2026-10-07); owner suggested Coinbase Advanced:**
    - **Solana:** Jupiter quote + execution (Coinbase's app also routes Solana DEX trades via Jupiter).
-   - **Base:** Coinbase CDP Swap API (0x-powered) or 0x directly. Must verify that it uses **exact-amount** approvals (loss register F5).
+   - **Base: built on 0x Swap API v2 directly (AllowanceHolder).** CDP's Swap API routes through 0x but sets approvals itself, while calling 0x directly lets the bot enforce exact-amount approvals to the allowlisted AllowanceHolder `0x0000000000001fF3684f28c67538d4D072C22734` (loss register F5). **Needed:** `ZEROX_API_KEY` (dashboard.0x.org), and optionally `BASE_RPC_URL`. **Decision needed:** should tokens with a live contract owner ever be allowed on Base? They are currently rejected.
    - **Coinbase Advanced Trade API:** a centralized order book for Coinbase-*listed* assets (~300). No evidence was found that it can quote or trade the in-app DEX tokens, so it does **not** cover fresh pump.fun/Base meme coins. Optional third venue for listed coins. Advantage: **exchange-held stop-limit orders** that protect positions while the bot is offline. Caveat: a stop-limit may not fill on a gap. It is an order-book model (real partial fills, real cancels), so it needs its own adapter.
    - **Rule:** the quote must come from the same path that executes. A quote from one router is not executable on another.
    - **Open (2a):** include Coinbase Advanced as a third venue for listed coins?
@@ -34,7 +34,7 @@ placeholders, **not recommendations**.
 9. Daily loss limit $ and max drawdown %. Should the daily halt auto-reset at UTC midnight? It is currently manual-resume.
 10. Liquidity floor, max round-trip spread, entry slippage, max price impact, max data age.
 11. Token-safety thresholds: accept mint/freeze authority ever? Max transfer tax? Max top-10 holder share? Note: confirm whether Birdeye's `top10HolderPercent` is a fraction or a percent.
-12. Priority-fee caps (normal and emergency).
+12. Priority-fee caps (normal and emergency), and the Base gas-price cap (`max_base_gas_gwei`, placeholder 0.5 gwei).
 13. Exit ladder, emergency slippage cap, max attempts, backoff, and post-exhaustion probe interval (or operator-only).
 14. Vanish thresholds, emergency policy (`exit_all` / `exit_if_loss` / `hold_protected`), and recovery requirements.
 15. Latency budgets, and markout adverse threshold (frozen before evaluation).
@@ -46,4 +46,4 @@ placeholders, **not recommendations**.
 17. Alerting channel for HALT / EXIT_FAILED / RECONCILE_MISMATCH events.
 18. Who may run `resume()` and acknowledge breaker recovery.
 19. Birdeye plan rate limits, to size the token bucket and the exit reserve.
-20. **API keys (environment variables only):** `BITQUERY_API_KEY`, `CODEX_API_KEY`, `JUPITER_API_KEY`, `SOLANA_RPC_URL` (paid). Feeds stay off, and stage must be operator-asserted, until the first two are set.
+20. **API keys (environment variables only):** `BITQUERY_API_KEY`, `CODEX_API_KEY`, `JUPITER_API_KEY` (+ `JUPITER_RPS` for paid plans), `SOLANA_RPC_URL` (paid), `ZEROX_API_KEY` (Base), optional `BASE_RPC_URL`. Feeds stay off, and stage must be operator-asserted, until the first two are set.

@@ -34,6 +34,8 @@ tradebot/
   venues/paper_dex.py simulated AMM with fault injection
   venues/jupiter.py   Jupiter Swap V2 quotes + paper venue on live prices
   data/solana_rpc.py  read-only on-chain token safety and tx status
+  venues/zeroex.py    0x Swap API v2 quotes + Base paper venue with exact approvals
+  data/evm_rpc.py     read-only Base token safety (owner, proxy, decimals)
   data/bitquery.py    pump.fun lifecycle (primary feed)
   data/codex.py       stage, liquidity, holders, creator history (secondary feed)
   data/feeds.py       fail-closed cross-check of the two feeds
@@ -48,6 +50,7 @@ python -m pytest -q
 python -m tradebot.adversarial.daily --out reports
 # paper trading on LIVE Jupiter prices (nothing is signed or sent):
 python -m tradebot.live_paper --mint <SOLANA_MINT> --usd 20 --seconds 90
+python -m tradebot.live_paper --chain base --mint <0x_TOKEN> --usd 20 --seconds 90   # needs ZEROX_API_KEY
 ```
 Optional env: `JUPITER_API_KEY` (free; keyless is 0.5 req/s), `SOLANA_RPC_URL` (paid RPC recommended), `BITQUERY_API_KEY` + `CODEX_API_KEY` (turn on the launchpad/creator feeds).
 
