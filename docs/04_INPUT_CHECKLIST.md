@@ -12,7 +12,8 @@ placeholders, **not recommendations**.
    - **Decided (2026-10-07):**
      - (1a) **Solana and Base.** Base needs a separate EVM execution adapter, and its risks are in loss register section F.
      - (1b) **pump.fun only after graduation.** Bonding-curve tokens are rejected. A migration in progress triggers vanish.
-     - (1c) **Signals fully automated.** No public trending API was found for FOMO or Coinbase, so an automated stand-in feed is needed (e.g. Birdeye trending/new-listing data on Solana and Base; endpoint to be verified). Automated proposals still pass the deterministic risk gate.
+     - (1d) **FOMO as an execution venue: rejected.** It has no official trading API. App automation would be fragile, likely against its terms, would give no executable quotes and no reconciliation, and would expose credentials. The same tokens are traded directly via Jupiter or 0x.
+     - (1c) **Signals fully automated.** FOMO signal candidates: Bitquery FOMO API (indexes FOMO trades on-chain; preferred) and unofficial feeds (fomoapi.io, getfomoapi.fun), treated as untrusted. Beware copy-bait wallets (loss register F3). No public trending API was found for FOMO or Coinbase, so an automated stand-in feed is needed (e.g. Birdeye trending/new-listing data on Solana and Base; endpoint to be verified). Automated proposals still pass the deterministic risk gate.
 2. **Executable-quote source. Proposed (2026-10-07); owner suggested Coinbase Advanced:**
    - **Solana:** Jupiter quote + execution (Coinbase's app also routes Solana DEX trades via Jupiter).
    - **Base:** Coinbase CDP Swap API (0x-powered) or 0x directly. Must verify that it uses **exact-amount** approvals (loss register F5).
