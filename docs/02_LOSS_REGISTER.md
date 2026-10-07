@@ -88,6 +88,7 @@ or data, so it cannot be tested in paper mode.
 | F8 | **Base: sequencer outage / reorg** | L2 sequencer down, or a reorg | Exits impossible; fills reversed | H | Sequencer health → vanish; fills final only after N confirmations | `test_sequencer_down_vanish` | Full position while down |
 | F9 | Cross-chain correlated exposure | Same narrative pumps on Solana and Base | Exposure cap per chain looks fine, total doesn't | H | Total-exposure cap spans both chains (one portfolio) | `test_exposure_cap_cross_chain` | — |
 | F11 | Serial-rugger creator | Creator wallet with a history of dead tokens launches again and it graduates | Dump right after graduation | H | Creator-reputation gate (launch count, graduated-to-dead ratio); unknown = reject | `test_rejects_serial_rugger_creator` | Clean history built up deliberately, or a fresh creator wallet |
+| F12 | Signal-feed outage or disagreement | Bitquery lags or drops events; Codex disagrees | Missed graduations, or trades on wrong data | M | Two-source cross-check; a silent primary or disagreement = block entries on that token; feed lag is measured | `test_feed_disagreement_blocks_entry` | Both feeds wrong in the same way |
 | F10 | Wrong-chain address | A 0x address sent to the Solana path, or vice versa | Failed or misrouted trades | M | Proposals carry an explicit `chain`; the address format is validated per chain | `test_chain_address_validation` | — |
 
 ## Residual risk code cannot eliminate
