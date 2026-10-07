@@ -105,7 +105,8 @@ class MarketSnapshot:
     bid: Optional[Quote]  # executable sell quote for the reference size
     ask: Optional[Quote]  # executable buy quote for the reference size
     priority_fee_lamports: Optional[int] = None
-    liquidity_is_estimate: bool = False  # True: derived (e.g. from price impact), not a pool reading
+    liquidity_is_estimate: bool = False
+    gas_price_wei: Optional[int] = None  # EVM chains (Base); Solana uses priority_fee_lamports  # True: derived (e.g. from price impact), not a pool reading
 
     def age_ms(self, now_ms: int) -> int:
         return now_ms - self.ts_source_ms

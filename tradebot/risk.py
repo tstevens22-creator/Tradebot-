@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional
 
-from .chains import STAGE_AMM, STAGE_BONDING_CURVE, STAGE_MIGRATING
+from .chains import BASE, STAGE_AMM, STAGE_BONDING_CURVE, STAGE_MIGRATING
 from .config import RiskConfig
 from .models import BPS, MarketSnapshot, Quote, TokenSafety
 from .portfolio import Portfolio
@@ -87,7 +87,11 @@ def authorize(cfg: RiskConfig, p: TradeProposal, ctx: RiskContext) -> Decision:
         rt = snap.round_trip_bps
         if rt is None or rt > cfg.max_spread_bps:
             r.append(f"WIDE_SPREAD: round-trip {rt} bps > {cfg.max_spread_bps}")
-        if snap.priority_fee_lamports is None or snap.priority_fee_lamports > cfg.max_priority_fee_lamports:
+        if p.chain == BASE:
+            gwei = Decimal(snap.gas_price_wei) / Decimal(10 ** 9) if snap.gas_price_wei is not None else None
+            if gwei is None or gwei > cfg.max_base_gas_gwei:
+                r.append(f"GAS_PRICE: {gwei} gwei > {cfg.max_base_gas_gwei}")
+        elif snap.priority_fee_lamports is None or snap.priority_fee_lamports > cfg.max_priority_fee_lamports:
             r.append(f"PRIORITY_FEE: {snap.priority_fee_lamports} > {cfg.max_priority_fee_lamports}")
 
     if q is None or q.token != p.token or q.qty <= 0 or q.usd != p.usd_size:

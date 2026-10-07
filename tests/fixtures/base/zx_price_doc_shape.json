@@ -1,0 +1,67 @@
+{
+ "allowanceTarget": "0x0000000000001ff3684f28c67538d4d072c22734",
+ "blockNumber": "23234885",
+ "buyAmount": "4580501293888840000000",
+ "buyToken": "0x4ed4e862860bed51a9570b96d89af5e1b0efefed",
+ "fees": {
+  "integratorFee": null,
+  "zeroExFee": {
+   "amount": "6882054465964840000",
+   "token": "0x4ed4e862860bed51a9570b96d89af5e1b0efefed",
+   "type": "volume"
+  },
+  "gasFee": null
+ },
+ "gas": "311681",
+ "gasPrice": "5584598",
+ "issues": {
+  "allowance": {
+   "actual": "0",
+   "spender": "0x0000000000001ff3684f28c67538d4d072c22734"
+  },
+  "balance": {
+   "token": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+   "actual": "0",
+   "expected": "20000000"
+  },
+  "simulationIncomplete": false,
+  "invalidSourcesPassed": []
+ },
+ "liquidityAvailable": true,
+ "minBuyAmount": "4534627470214440000000",
+ "route": {
+  "fills": [
+   {
+    "from": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "to": "0x4ed4e862860bed51a9570b96d89af5e1b0efefed",
+    "source": "Uniswap_V3",
+    "proportionBps": "10000"
+   }
+  ],
+  "tokens": [
+   {
+    "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "symbol": "USDC"
+   },
+   {
+    "address": "0x4ed4e862860bed51a9570b96d89af5e1b0efefed",
+    "symbol": "DEGEN"
+   }
+  ]
+ },
+ "sellAmount": "20000000",
+ "sellToken": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+ "tokenMetadata": {
+  "buyToken": {
+   "buyTaxBps": "0",
+   "sellTaxBps": "0"
+  },
+  "sellToken": {
+   "buyTaxBps": "0",
+   "sellTaxBps": "0"
+  }
+ },
+ "totalNetworkFee": "1740575431731",
+ "zid": "0x2450cc642b05b3cebfd9bf35",
+ "_fixture_note": "Field shape from the 0x v2 /allowance-holder/price docs example; re-addressed to Base; numbers illustrative"
+}

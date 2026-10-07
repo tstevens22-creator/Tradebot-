@@ -33,7 +33,7 @@ from pathlib import Path
 from typing import Optional
 
 from .bot import Bot
-from .chains import STAGE_AMM, normalize_address, SOLANA
+from .chains import BASE, SOLANA, STAGE_AMM, normalize_address
 from .clock import Clock
 from .config import load
 from .journal import Journal
@@ -54,14 +54,23 @@ def impact_implied_liquidity(ref_usd: Decimal, impact_bps: Decimal) -> Decimal:
 
 
 def build_snapshot(client: JupiterClient, mint: str, decimals: int, ref_usd: Decimal,
-                   priority_fee_lamports: int, now_ms: int, quote_rtts: list[int]) -> MarketSnapshot:
+                   priority_fee_lamports: int, now_ms: int, quote_rtts: list[int]):
+    """-> (snapshot, raw ask quote). The raw quote carries chain-specific extras (0x taxes, gas)."""
     ask, oq_a = client.quote_buy(mint, ref_usd, decimals)
     bid, oq_b = client.quote_sell(mint, ask.qty, decimals)
     quote_rtts += [oq_a.latency_ms, oq_b.latency_ms]
+    gas = getattr(oq_a, "gas_price_wei", None)  # Base (0x); None on Solana
     return MarketSnapshot(token=mint, ts_source_ms=now_ms, ts_received_ms=now_ms,
                           liquidity_usd=impact_implied_liquidity(ref_usd, ask.price_impact_bps),
-                          indicative_price=None, bid=bid, ask=ask, priority_fee_lamports=priority_fee_lamports,
-                          liquidity_is_estimate=True)
+                          indicative_price=None, bid=bid, ask=ask,
+                          priority_fee_lamports=None if gas is not None else priority_fee_lamports,
+                          liquidity_is_estimate=True, gas_price_wei=gas), oq_a
+
+
+def token_tax_bps(raw) -> Optional[Decimal]:
+    """Base: 0x-measured buy/sell tax of the token (worse of the two). None = unknown -> reject."""
+    b, s = getattr(raw, "buy_tax_bps", None), getattr(raw, "sell_tax_bps", None)
+    return None if b is None or s is None else max(b, s)
 
 
 class SnapshotBenchmark:
@@ -83,15 +92,23 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
         assert_graduated: bool, assert_sellable: bool, out_dir: Path,
         client: Optional[JupiterClient] = None, rpc=None, clock: Optional[Clock] = None,
         sleep=time.sleep, skip_creator_check: bool = False, bitquery=None, codex=None,
-        feed_every_s: float = 30.0) -> dict:
+        feed_every_s: float = 30.0, chain: str = SOLANA) -> dict:
+    from .data.evm_rpc import EvmRpc
     from .data.solana_rpc import SolanaRpc
+    from .venues.zeroex import ZeroExClient, ZeroExPaperVenue
 
-    mint = normalize_address(SOLANA, mint)
+    mint = normalize_address(chain, mint)
     clock = clock or Clock()
-    client = client or JupiterClient(now_ms=clock.now_ms)
-    rpc = rpc or SolanaRpc()
+    if chain == BASE:
+        client = client or ZeroExClient(now_ms=clock.now_ms)
+        if not client.api_key:
+            raise SystemExit("Base needs ZEROX_API_KEY (0x requires a key; get one at dashboard.0x.org)")
+        rpc = rpc or EvmRpc()
+    else:
+        client = client or JupiterClient(now_ms=clock.now_ms)
+        rpc = rpc or SolanaRpc()
     base = load(str(ROOT / "config" / "paper.example.toml"))
-    cfg = dataclasses.replace(base, enabled_chains=(SOLANA,), max_data_age_ms=max_data_age_ms,
+    cfg = dataclasses.replace(base, enabled_chains=(chain,), max_data_age_ms=max_data_age_ms,
                               unknown_resolution_timeout_s=max(base.unknown_resolution_timeout_s, 180),
                               require_creator_history=base.require_creator_history and not skip_creator_check)
     stamp = dt.datetime.fromtimestamp(clock.now_ms() / 1000, tz=dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -100,16 +117,18 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
 
     warnings: list[str] = []
     if max_data_age_ms > 3000:
-        warnings.append(f"Jupiter plan allows {client.rps} req/s: ticks every {tick_s:.1f}s, data-age limit "
+        warnings.append(f"Quote API plan allows {client.rps} req/s: ticks every {tick_s:.1f}s, data-age limit "
                         f"relaxed to {max_data_age_ms} ms (production target 3000 ms needs ~10 req/s).")
     from .data.bitquery import BitqueryClient
     from .data.codex import CodexClient
     from .data.feeds import apply_view, consensus
     bitquery = bitquery or BitqueryClient()
     codex = codex or CodexClient()
-    feeds_on = bool(bitquery.gql.auth_header and codex.gql.auth_header)
+    # Solana needs both feeds (Bitquery primary); Base uses Codex only (Bitquery Base coverage unverified).
+    feeds_on = bool(codex.gql.auth_header and (chain == BASE or bitquery.gql.auth_header))
     if not feeds_on:
-        warnings.append("No BITQUERY_API_KEY/CODEX_API_KEY: stage must be operator-asserted and liquidity is an "
+        need = "CODEX_API_KEY" if chain == BASE else "BITQUERY_API_KEY/CODEX_API_KEY"
+        warnings.append(f"No {need}: stage must be operator-asserted and liquidity is an "
                         "ESTIMATE implied from quote price impact.")
     if skip_creator_check:
         warnings.append("Creator-reputation check SKIPPED by operator (--skip-creator-check).")
@@ -133,7 +152,8 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
     last_feed_ms = -10**15
     feed_log: list[dict] = []
 
-    venue = JupiterPaperVenue(clock, client, lambda _t: safety.decimals)
+    venue = (ZeroExPaperVenue(clock, client, lambda _t: safety.decimals) if chain == BASE
+             else JupiterPaperVenue(clock, client, lambda _t: safety.decimals))
     bot = Bot(cfg, venue, journal, clock)
     bench = SnapshotBenchmark()
     quote_rtts: list[int] = []
@@ -147,15 +167,16 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
         if feeds_on and clock.now_ms() - last_feed_ms >= feed_every_s * 1000:
             last_feed_ms = clock.now_ms()
             p = s = None
+            if chain == SOLANA:
+                try:
+                    p = bitquery.reading(mint, clock.now_ms())
+                except VenueError as e:
+                    errors.append(f"bitquery: {e}")
             try:
-                p = bitquery.reading(mint, clock.now_ms())
-            except VenueError as e:
-                errors.append(f"bitquery: {e}")
-            try:
-                s = codex.readings(SOLANA, [mint], clock.now_ms()).get(mint)
+                s = codex.readings(chain, [mint], clock.now_ms()).get(mint)
             except VenueError as e:
                 errors.append(f"codex: {e}")
-            view = consensus(mint, SOLANA, clock.now_ms(), cfg.feed_max_age_ms, p, s)
+            view = consensus(mint, chain, clock.now_ms(), cfg.feed_max_age_ms, p, s)
             safety = apply_view(onchain_safety if not assert_sellable else
                                 dataclasses.replace(onchain_safety, sell_simulation_ok=True), view)
             feed_log.append({"ts": clock.now_ms(), "stage": view.stage, "liquidity_usd": str(view.liquidity_usd),
@@ -165,8 +186,10 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
         elif feeds_on and view is not None and clock.now_ms() - view.ts_ms > cfg.feed_max_age_ms:
             safety = dataclasses.replace(safety, venue_stage=None)  # feed went stale -> unknown
         try:
-            snap = build_snapshot(client, mint, safety.decimals, usd, venue.priority_fee_lamports,
-                                  clock.now_ms(), quote_rtts)
+            snap, ask_raw = build_snapshot(client, mint, safety.decimals, usd,
+                                           getattr(venue, "priority_fee_lamports", 0), clock.now_ms(), quote_rtts)
+            if chain == BASE:
+                safety = dataclasses.replace(safety, transfer_tax_bps=token_tax_bps(ask_raw))
             if feeds_on and view is not None:
                 snap = dataclasses.replace(snap, liquidity_usd=view.liquidity_usd, liquidity_is_estimate=False)
             bench.series.append(snap)
@@ -177,7 +200,7 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
         ticks += 1
         if decision is None and mint in bot.snapshots:
             sleep(1.0 / (client.rps * 0.9))  # let the rate budget refill so the exact-size entry quote fits
-            decision = bot.propose({"proposal_id": f"live-paper-{stamp}", "chain": SOLANA, "token": mint,
+            decision = bot.propose({"proposal_id": f"live-paper-{stamp}", "chain": chain, "token": mint,
                                     "usd_size": str(usd), "expected_edge_bps": "500"})
         sleep(max(0.0, tick_s - (clock.now_ms() - t0) / 1000))
 
@@ -221,7 +244,8 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--mint", required=True)
+    ap.add_argument("--mint", required=True, help="Solana mint or Base 0x token address")
+    ap.add_argument("--chain", choices=[SOLANA, BASE], default=SOLANA)
     ap.add_argument("--usd", default="20")
     ap.add_argument("--seconds", type=int, default=90)
     ap.add_argument("--tick-s", type=float, default=None)
@@ -231,12 +255,13 @@ def main(argv=None) -> int:
     ap.add_argument("--skip-creator-check", action="store_true")
     ap.add_argument("--out", default="reports")
     a = ap.parse_args(argv)
-    rps = JupiterClient().rps
+    from .venues.zeroex import ZeroExClient
+    rps = (ZeroExClient() if a.chain == BASE else JupiterClient()).rps
     quotes_per_tick = 3
     tick = a.tick_s or max(1.0, quotes_per_tick / (rps * 0.9))
     age = a.max_data_age_ms or max(3000, int(tick * 1000 * 2.5))
     rep = run(a.mint, Decimal(a.usd), a.seconds, tick, age, a.operator_asserts_graduated,
-              a.operator_asserts_sellable, Path(a.out), skip_creator_check=a.skip_creator_check)
+              a.operator_asserts_sellable, Path(a.out), skip_creator_check=a.skip_creator_check, chain=a.chain)
     print(json.dumps({k: v for k, v in rep.items() if k != "markout_rows"}, indent=2, default=str))
     return 0
 

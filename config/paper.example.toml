@@ -40,6 +40,7 @@ creator_min_graduation_ratio = "0.2"
 feed_max_age_ms = 30000
 max_priority_fee_lamports = 100000
 emergency_max_priority_fee_lamports = 1000000
+max_base_gas_gwei = "0.5"
 max_exit_attempts = 4
 exit_retry_backoff_ms = 500
 exit_failed_probe_interval_s = 30

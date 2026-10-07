@@ -107,6 +107,7 @@ class RiskConfig:
     # --- chain fees -----------------------------------------------------
     max_priority_fee_lamports: int
     emergency_max_priority_fee_lamports: int
+    max_base_gas_gwei: Decimal  # Base: entries blocked above this gas price
 
     # --- exit escalation ------------------------------------------------
     max_exit_attempts: int
@@ -185,7 +186,7 @@ def _validate(c: RiskConfig) -> None:
         "vanish_window_s", "vanish_spread_bps", "vanish_liquidity_drop_pct",
         "vanish_volatility_bps", "recovery_healthy_observations", "max_open_positions",
         "unknown_resolution_timeout_s", "markout_benchmark_tolerance_ms",
-        "creator_max_tokens_created", "feed_max_age_ms",
+        "creator_max_tokens_created", "feed_max_age_ms", "max_base_gas_gwei",
     ]
     for name in pos:
         req(getattr(c, name) > 0, f"{name} must be > 0")

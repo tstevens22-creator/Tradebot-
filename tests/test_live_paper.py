@@ -146,3 +146,79 @@ def test_live_paper_feed_disagreement_rejects(tmp_path):
 def test_live_paper_serial_launcher_rejected(tmp_path):
     rep = run_with_feeds(tmp_path, FakeFeeds(created=80, migrated=1))
     assert any("CREATOR_SERIAL_LAUNCHER" in r for r in rep["decision"]["reasons"])
+
+
+# ---- Base (0x) ----------------------------------------------------------------
+def base_rpc(owner_word="0x" + "0" * 64):
+    from tradebot.data.evm_rpc import EvmRpc
+
+    def opener(req, t):
+        b = json.loads(req.data)
+        if b["method"] == "eth_call" and b["params"][0]["data"] == "0x313ce567":
+            return json.dumps({"jsonrpc": "2.0", "id": 1, "result": "0x" + "0" * 62 + "12"}).encode()
+        if b["method"] == "eth_call":
+            return json.dumps({"jsonrpc": "2.0", "id": 1, "result": owner_word}).encode()
+        return json.dumps({"jsonrpc": "2.0", "id": 1, "result": "0x" + "0" * 64}).encode()
+    return EvmRpc(url="https://x", bucket=TokenBucket(1000, 1000), opener=opener)
+
+
+def run_base(tmp_path, fake=None, rpc=None, feeds=None, seconds=15, sleep_hook=None):
+    from tradebot.venues.zeroex import ZeroExClient
+    from test_zeroex import DEGEN, FakeZx
+    clock = SimClock()
+    fake = fake or FakeZx()
+    client = ZeroExClient(api_key="k", bucket=TokenBucket(1000, 1000), opener=fake, now_ms=clock.now_ms)
+    feeds = feeds or FakeFeeds()
+
+    def sleep(s):
+        if sleep_hook:
+            sleep_hook()
+        clock.advance(int(s * 1000))
+
+    return run(mint=DEGEN, usd=Decimal(20), seconds=seconds, tick_s=1.0, max_data_age_ms=3000,
+               assert_graduated=False, assert_sellable=True, out_dir=tmp_path, client=client,
+               rpc=rpc or base_rpc(), clock=clock, sleep=sleep, bitquery=BitqueryClient(token=""),
+               codex=feeds, chain="base")
+
+
+def test_base_paper_trade_with_codex_feed(tmp_path):
+    rep = run_base(tmp_path)
+    assert rep["feeds_on"] and rep["decision"]["approved"], rep["decision"]
+    assert rep["fills"] and rep["fills"][0]["side"] == "BUY"
+    assert rep["onchain_safety"]["mint_authority"] is False  # renounced owner
+
+
+def test_base_owned_token_rejected(tmp_path):
+    rep = run_base(tmp_path, rpc=base_rpc("0x" + "0" * 24 + "704ec5c12ca20a293c2c0b72b22619a4231f3c0d"))
+    reasons = " ".join(rep["decision"]["reasons"])
+    assert "MINT_AUTHORITY" in reasons and "FREEZE_AUTHORITY" in reasons and not rep["fills"]
+
+
+def test_base_sell_tax_from_0x_rejected(tmp_path):
+    from test_zeroex import FakeZx
+    fake = FakeZx()
+    fake.sell_tax = "500"  # 5% sell tax measured by 0x
+    rep = run_base(tmp_path, fake=fake)
+    assert any("TRANSFER_TAX" in r for r in rep["decision"]["reasons"])
+
+
+def test_base_requires_0x_key(tmp_path):
+    import pytest
+    from tradebot.venues.zeroex import ZeroExClient
+    with pytest.raises(SystemExit):
+        run(mint="0x4ed4e862860bed51a9570b96d89af5e1b0efefed", usd=Decimal(20), seconds=1, tick_s=1.0,
+            max_data_age_ms=3000, assert_graduated=False, assert_sellable=False, out_dir=tmp_path,
+            client=ZeroExClient(api_key=""), chain="base")
+
+
+def test_base_gas_cap_blocks_entries():
+    from tradebot.chains import BASE
+    from tradebot.sim import BASE_TOKEN, Sim
+    s = Sim()
+    s.add_token(BASE_TOKEN, BASE)
+    s.base_gas_wei = 2_000_000_000  # 2 gwei spike > 0.5 cap
+    s.run(2)
+    assert any("GAS_PRICE" in r for r in s.propose(token=BASE_TOKEN).reasons)
+    s.base_gas_wei = 5_000_000
+    s.run(1)
+    assert s.propose(token=BASE_TOKEN).approved

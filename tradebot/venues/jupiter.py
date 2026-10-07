@@ -37,10 +37,10 @@ from decimal import Decimal
 from typing import Callable, Optional
 
 from ..clock import Clock
-from ..models import BPS, Fill, Quote, Side, from_atomic, to_atomic
+from ..models import BPS, Quote, Side, from_atomic, to_atomic
 from ..ratelimit import TokenBucket
-from ..state_machine import Order
-from .base import RateLimited, SubmitResult, TxStatus, VenueError, VenueTimeout
+from .base import RateLimited, VenueError, VenueTimeout
+from .live_quote_paper import LiveQuotePaperVenue
 
 BASE_URL = "https://api.jup.ag/swap/v2"
 USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
@@ -174,46 +174,23 @@ class JupiterClient:
 
 
 # ---------------------------------------------------------------------------
-@dataclass
-class _PaperTx:
-    order: Order
-    tx_id: str
-    submit_ms: int
-    land_ms: int
-    status: str = "PENDING"
-    fill: Optional[Fill] = None
-    reason: str = ""
-
-
-class JupiterPaperVenue:
-    """Paper trading on LIVE Jupiter prices. No transaction is ever built,
-    signed or sent.
-
-    At the simulated landing time the venue re-quotes the exact size from
-    Jupiter and fills at that real price, or FAILS if it is worse than
-    ``min_out``. That models price drift between decision and landing. If the
-    re-quote cannot be fetched (rate limit, outage), the tx stays PENDING and
-    EXPIRES after ``tx_expiry_ms``, like a Solana tx whose blockhash lapsed.
-    """
+class JupiterPaperVenue(LiveQuotePaperVenue):
+    """Paper trading on LIVE Jupiter prices (see LiveQuotePaperVenue)."""
 
     name = "jupiter-paper"
-    is_simulated = True  # real prices, simulated fills
     chains: tuple[str, ...] = ("solana",)
 
     def __init__(self, clock: Clock, client: JupiterClient, decimals_of: Callable[[str], int],
                  confirm_delay_ms: int = 1500, tx_expiry_ms: int = 90_000,
                  priority_fee_lamports: int = 50_000, base_fee_lamports: int = 5_000,
                  sol_usd: Optional[Callable[[], Optional[Decimal]]] = None):
-        self.clock, self.client, self.decimals_of = clock, client, decimals_of
-        self.confirm_delay_ms, self.tx_expiry_ms = confirm_delay_ms, tx_expiry_ms
+        super().__init__(clock, confirm_delay_ms, tx_expiry_ms)
+        self.client, self.decimals_of = client, decimals_of
         self.priority_fee_lamports, self.base_fee_lamports = priority_fee_lamports, base_fee_lamports
         self._sol_usd = sol_usd
         self._sol_cache: tuple[int, Optional[Decimal]] = (0, None)
-        self.wallet: dict[str, Decimal] = {}
-        self.txs: dict[str, _PaperTx] = {}
         self.last_order: Optional[OrderQuote] = None
 
-    # -- quotes ---------------------------------------------------------
     def quote_buy(self, token: str, usd_in: Decimal) -> Quote:
         q, self.last_order = self.client.quote_buy(token, usd_in, self.decimals_of(token))
         return q
@@ -241,60 +218,3 @@ class JupiterPaperVenue:
         if px is None:
             return Decimal("0.05")  # conservative fallback when SOL price is unknown
         return Decimal(self.base_fee_lamports + self.priority_fee_lamports) / LAMPORTS_PER_SOL * px
-
-    def balance(self, token: str) -> Decimal:
-        return self.wallet.get(token, Decimal(0))
-
-    # -- simulated execution ------------------------------------------
-    def submit_swap(self, order: Order) -> SubmitResult:
-        tx_id = "paper_" + order.client_order_id
-        if tx_id not in self.txs:
-            now = self.clock.now_ms()
-            self.txs[tx_id] = _PaperTx(order, tx_id, now, now + self.confirm_delay_ms)
-        return SubmitResult("ACCEPTED", tx_id)
-
-    def process(self) -> None:
-        now = self.clock.now_ms()
-        for tx in self.txs.values():
-            if tx.status != "PENDING":
-                continue
-            if now - tx.submit_ms >= self.tx_expiry_ms:
-                tx.status, tx.reason = "EXPIRED", "no landing quote before expiry"
-                continue
-            if now >= tx.land_ms:
-                self._land(tx)
-
-    def _land(self, tx: _PaperTx) -> None:
-        o = tx.order
-        try:
-            if o.side is Side.BUY:
-                q = self.quote_buy(o.token, o.qty)
-                if q.qty < o.min_out:
-                    tx.status, tx.reason = "FAILED", "slippage: tokens out < min_out"
-                    return
-                qty, price = q.qty, o.qty / q.qty
-                self.wallet[o.token] = self.wallet.get(o.token, Decimal(0)) + qty
-            else:
-                have = self.wallet.get(o.token, Decimal(0))
-                if o.qty > have:
-                    tx.status, tx.reason = "FAILED", "insufficient balance"
-                    return
-                q = self.quote_sell(o.token, o.qty)
-                if q.usd < o.min_out:
-                    tx.status, tx.reason = "FAILED", "slippage: usd out < min_out"
-                    return
-                qty, price = o.qty, q.usd / o.qty
-                self.wallet[o.token] = have - o.qty
-        except VenueError:
-            return  # stays PENDING; retried next process() until expiry
-        tx.status = "CONFIRMED"
-        tx.fill = Fill(fill_id=tx.tx_id, client_order_id=o.client_order_id, token=o.token, side=o.side,
-                       qty=qty, price=price, fee_usd=self.network_fee_usd(), tax_usd=Decimal(0),
-                       ts_exec_ms=self.clock.now_ms(), ts_uncertainty_ms=self.confirm_delay_ms,
-                       venue=self.name)
-
-    def get_tx_status(self, client_order_id: str) -> TxStatus:
-        tx = self.txs.get("paper_" + client_order_id)
-        if tx is None:
-            return TxStatus("NOT_FOUND")
-        return TxStatus(tx.status, tx.fill, tx.reason)

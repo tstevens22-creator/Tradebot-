@@ -31,7 +31,7 @@ PAPER_CONFIG: dict[str, Any] = {
     "max_top10_holder_pct": "0.5", "require_sell_simulation": True,
     "require_creator_history": True, "creator_max_tokens_created": 20, "creator_min_graduation_ratio": "0.2",
     "feed_max_age_ms": 30000,
-    "max_priority_fee_lamports": 100_000, "emergency_max_priority_fee_lamports": 1_000_000,
+    "max_priority_fee_lamports": 100_000, "max_base_gas_gwei": "0.5", "emergency_max_priority_fee_lamports": 1_000_000,
     "max_exit_attempts": 4, "exit_retry_backoff_ms": 500, "exit_failed_probe_interval_s": 30, "exit_slippage_ladder_bps": [100, 300, 600, 1000],
     "emergency_max_slippage_bps": "1500", "unknown_resolution_timeout_s": 90, "cooldown_after_stop_s": 300,
     "vanish_adverse_move_pct": "0.15", "vanish_window_s": 60, "vanish_spread_bps": "800",
@@ -75,6 +75,7 @@ class Sim:
         self.decision_delay_ms = decision_delay_ms
         self.safety_overrides: dict[str, Any] = {}
         self.feed_up = True
+        self.base_gas_wei = 5_000_000  # 0.005 gwei, typical quiet Base
 
     def snapshot(self, token: str = TOKEN) -> MarketSnapshot:
         p = self.venue.pools[token]
@@ -84,7 +85,8 @@ class Sim:
         usd, _ = p.sell_out(out)
         bid = Quote(token, Side.SELL, out, usd, (1 - usd / out / p.spot) * 10_000, now)
         return MarketSnapshot(token, now, now, p.usd_reserve * 2, p.spot, bid, ask,
-                              priority_fee_lamports=self.venue.faults.priority_fee_lamports)
+                              priority_fee_lamports=self.venue.faults.priority_fee_lamports,
+                              gas_price_wei=self.base_gas_wei)
 
     def add_token(self, token: str, chain: str, token_reserve: Decimal = Decimal(1_000_000),
                   usd_reserve: Decimal = Decimal(100_000)) -> None:
