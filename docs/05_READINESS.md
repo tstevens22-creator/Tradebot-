@@ -18,6 +18,7 @@
 | P2 | Birdeye read-only adapter with rate budget reserving quota for exits | ✅ (field mapping **unverified** against the live API) |
 | P1 | **Build step 1:** chain awareness (Solana + Base), per-chain address checks, EVM case normalization, post-graduation-only gate, migration → vanish, one exposure cap across chains | ✅ `chains.py`, `risk.py`, `bot.py`, `tests/test_chains.py` |
 | P1 | **Build step 2:** Jupiter Swap V2 `/order` client (validated quotes, fee-aware), paper venue on LIVE Jupiter prices (re-quotes at landing, expiry on outage), read-only Solana RPC (mint/freeze authority, Token-2022 hazards, holders, signature status), `live_paper` runner | ✅ `venues/jupiter.py`, `data/solana_rpc.py`, `live_paper.py` |
+| P1 | **Build step 3:** Bitquery (primary, pump.fun created/migrated) + Codex (secondary: stage, real liquidity, holders, creator history; Solana + Base) adapters, fail-closed consensus (disagreement / silent primary / stale = unknown), creator-reputation gate, feeds wired into `live_paper` | ✅ `data/bitquery.py`, `data/codex.py`, `data/feeds.py`, `tests/test_feeds.py` |
 | P2 | Executable quote source (router) adapter | ❌ not started: needs your venue choice |
 | P2 | On-chain sell simulation, mint-authority read, multi-RPC quorum | ❌ not started |
 | P3 | Live venue adapter | ❌ **intentionally absent** |
@@ -25,7 +26,7 @@
 
 ## Test and replay results (2026-10-07, this container)
 
-- `pytest`: **172 passed**. Covers config, risk gate, execution, protection, circuit breaker, reconciliation/restart, markouts, Birdeye parsing, proposal schema, architecture boundaries, and property-based fault fuzzing. Fuzzing was additionally run under 28 extra Hypothesis seeds, all passing.
+- `pytest`: **199 passed**. Covers config, risk gate, execution, protection, circuit breaker, reconciliation/restart, markouts, Birdeye parsing, proposal schema, architecture boundaries, and property-based fault fuzzing. Fuzzing was additionally run under 28 extra Hypothesis seeds, all passing.
 - Fuzz coverage check (300 random sequences): reached filled entries, stop and emergency exits, failed exits, UNKNOWN orders, and exhausted-exit positions.
 - Daily adversarial run: `reports/adversarial-2026-10-07.md`, **0 invariant violations**, 1 financial-impact finding.
 
@@ -47,6 +48,12 @@
   Both need owner-supplied credentials: `JUPITER_API_KEY` (free) and `SOLANA_RPC_URL` (paid RPC).
 - **Defect found and fixed:** impact-implied liquidity swung ~40% as Jupiter's winning router changed, falsely tripping `LIQUIDITY_COLLAPSE` (it would have forced an emergency exit). Estimated liquidity can no longer trip collapse (`test_estimated_liquidity_swings_do_not_trigger_collapse`). Real liquidity comes from the step-3 feed.
 - Stage and sellability had to be operator-asserted. Without the assertions the gate rejects, which is correct and tested.
+
+### Step 3 status: feeds built, NOT yet run against the real APIs
+
+- No Bitquery or Codex key exists in this environment. Both APIs answered unauthenticated (Codex: HTTP 402 payment required). Queries and field names were taken from each provider's docs (Codex `filterTokens` reference; Bitquery `llms-full.txt`), and the tests use responses built from those documented schemas.
+- **To verify on the first keyed call:** that the Bitquery query runs as written, the scale of Codex `top10HoldersPercent` (read conservatively until then), Codex `liquidity` semantics, and Bitquery free-trial coverage of older tokens (real-time only; Codex cross-checks).
+- Creator thresholds (`creator_max_tokens_created = 20`, `creator_min_graduation_ratio = 0.2`) are **placeholders** until the owner decides checklist item 15b. Codex creator counts are lifetime counts, so a "launches per day" window is not available yet.
 
 ### Owner rules added: 10% stop, 30% profit floor
 

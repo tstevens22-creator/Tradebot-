@@ -114,6 +114,14 @@ def authorize(cfg: RiskConfig, p: TradeProposal, ctx: RiskContext) -> Decision:
             r.append(f"TRANSFER_TAX: {safety.transfer_tax_bps}")
         if safety.top10_holder_pct is None or safety.top10_holder_pct > cfg.max_top10_holder_pct:
             r.append(f"HOLDER_CONCENTRATION: {safety.top10_holder_pct}")
+        created, migrated = safety.creator_tokens_created, safety.creator_tokens_migrated
+        if created is None or migrated is None:
+            if cfg.require_creator_history:
+                r.append("CREATOR_UNKNOWN: no creator launch history")
+        elif created > cfg.creator_max_tokens_created:
+            r.append(f"CREATOR_SERIAL_LAUNCHER: {created} launches > {cfg.creator_max_tokens_created}")
+        elif created > 0 and Decimal(migrated) / Decimal(created) < cfg.creator_min_graduation_ratio:
+            r.append(f"CREATOR_LOW_GRADUATION: {migrated}/{created} < {cfg.creator_min_graduation_ratio}")
         if cfg.require_sell_simulation and safety.sell_simulation_ok is not True:
             r.append(f"SELLABILITY_UNVERIFIED: {safety.sell_simulation_ok}")
 

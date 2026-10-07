@@ -39,10 +39,11 @@ placeholders, **not recommendations**.
 14. Vanish thresholds, emergency policy (`exit_all` / `exit_if_loss` / `hold_protected`), and recovery requirements.
 15. Latency budgets, and markout adverse threshold (frozen before evaluation).
 
-15b. **Creator-reputation filter (proposed):** reject tokens whose creator wallet has a graduated-to-dead ratio below a threshold, or more than N launches in a window. Unknown history = reject. Thresholds needed.
+15b. **Creator-reputation filter: built (step 3).** Rejects when creator history is unknown (`require_creator_history`), when lifetime launches exceed `creator_max_tokens_created`, or when migrated/created is below `creator_min_graduation_ratio`. **Thresholds needed from the owner.** Paper placeholders: 20 launches, 0.2 ratio. Codex counts are lifetime, not per window.
 
 ## C. Operations
 16. Hot-wallet funding cap (a separate wallet holding only the risk budget is strongly recommended).
 17. Alerting channel for HALT / EXIT_FAILED / RECONCILE_MISMATCH events.
 18. Who may run `resume()` and acknowledge breaker recovery.
 19. Birdeye plan rate limits, to size the token bucket and the exit reserve.
+20. **API keys (environment variables only):** `BITQUERY_API_KEY`, `CODEX_API_KEY`, `JUPITER_API_KEY`, `SOLANA_RPC_URL` (paid). Feeds stay off, and stage must be operator-asserted, until the first two are set.

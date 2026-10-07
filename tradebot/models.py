@@ -91,6 +91,8 @@ class TokenSafety:
     chain: Optional[str] = None  # "solana" | "base"; None = unknown -> reject
     venue_stage: Optional[str] = None  # chains.STAGES; None = unknown -> reject
     hazards: tuple[str, ...] = ()  # e.g. Token-2022 PERMANENT_DELEGATE; any hazard -> reject
+    creator_tokens_created: Optional[int] = None  # creator wallet's lifetime launches (Codex)
+    creator_tokens_migrated: Optional[int] = None  # ...of which graduated/migrated
 
 
 @dataclass(frozen=True)

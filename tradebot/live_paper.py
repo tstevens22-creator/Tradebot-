@@ -5,11 +5,14 @@ Usage:
   python -m tradebot.live_paper --mint <SOLANA_MINT> --usd 20 --seconds 90 \
       [--operator-asserts-graduated] [--operator-asserts-sellable]
 
-Inputs this build can't fetch yet, and must be ASSERTED by the operator to
-get past the fail-closed gate (journaled and printed in the report):
-  * lifecycle stage (graduated/AMM): needs the Bitquery/Codex feed (step 3)
-  * sellability: needs a signed-tx sell simulation (live step)
-Without those flags the gate rejects the token, which is correct behavior.
+Feeds (step 3): with BITQUERY_API_KEY and CODEX_API_KEY set, the lifecycle
+stage, real liquidity, holder concentration and creator history come from
+the Bitquery/Codex consensus. Without them, the operator must ASSERT the stage
+(--operator-asserts-graduated) and may skip the creator check
+(--skip-creator-check). Both are journaled and printed in the report.
+Sellability always needs --operator-asserts-sellable until signed-tx sell
+simulation exists (live step). Without these flags the gate rejects the
+token, which is correct behavior.
 
 Keyless Jupiter allows only 0.5 req/s, so ticks are slow and the data-age
 limit must be relaxed for this demo (reported). Set JUPITER_API_KEY for
@@ -77,7 +80,8 @@ class SnapshotBenchmark:
 def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: int,
         assert_graduated: bool, assert_sellable: bool, out_dir: Path,
         client: Optional[JupiterClient] = None, rpc=None, clock: Optional[Clock] = None,
-        sleep=time.sleep) -> dict:
+        sleep=time.sleep, skip_creator_check: bool = False, bitquery=None, codex=None,
+        feed_every_s: float = 30.0) -> dict:
     from .data.solana_rpc import SolanaRpc
 
     mint = normalize_address(SOLANA, mint)
@@ -86,7 +90,8 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
     rpc = rpc or SolanaRpc()
     base = load(str(ROOT / "config" / "paper.example.toml"))
     cfg = dataclasses.replace(base, enabled_chains=(SOLANA,), max_data_age_ms=max_data_age_ms,
-                              unknown_resolution_timeout_s=max(base.unknown_resolution_timeout_s, 180))
+                              unknown_resolution_timeout_s=max(base.unknown_resolution_timeout_s, 180),
+                              require_creator_history=base.require_creator_history and not skip_creator_check)
     stamp = dt.datetime.fromtimestamp(clock.now_ms() / 1000, tz=dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out_dir.mkdir(parents=True, exist_ok=True)
     journal = Journal(str(out_dir / f"live-paper-{stamp}.db"), cfg.config_hash)
@@ -95,17 +100,36 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
     if not client.api_key:
         warnings.append(f"Keyless Jupiter (0.5 req/s): ticks every {tick_s}s, data-age limit relaxed to "
                         f"{max_data_age_ms} ms (production: 3000 ms with an API key).")
-    warnings.append("Liquidity is an ESTIMATE implied from quote price impact (real feed comes in step 3).")
+    from .data.bitquery import BitqueryClient
+    from .data.codex import CodexClient
+    from .data.feeds import apply_view, consensus
+    bitquery = bitquery or BitqueryClient()
+    codex = codex or CodexClient()
+    feeds_on = bool(bitquery.gql.auth_header and codex.gql.auth_header)
+    if not feeds_on:
+        warnings.append("No BITQUERY_API_KEY/CODEX_API_KEY: stage must be operator-asserted and liquidity is an "
+                        "ESTIMATE implied from quote price impact.")
+    if skip_creator_check:
+        warnings.append("Creator-reputation check SKIPPED by operator (--skip-creator-check).")
 
-    safety = rpc.token_safety(mint, clock.now_ms(), venue_stage=STAGE_AMM if assert_graduated else None)
+    safety = rpc.token_safety(mint, clock.now_ms(),
+                              venue_stage=STAGE_AMM if (assert_graduated and not feeds_on) else None)
     assertions = []
-    if assert_graduated:
-        assertions.append("stage=amm (graduated) asserted by operator; launchpad feed not built yet")
+    if assert_graduated and not feeds_on:
+        assertions.append("stage=amm (graduated) asserted by operator; no feed keys configured")
+    elif assert_graduated:
+        warnings.append("--operator-asserts-graduated ignored: feeds are configured and decide the stage.")
     if assert_sellable:
         safety = dataclasses.replace(safety, sell_simulation_ok=True)
         assertions.append("sellable asserted by operator; on-chain sell simulation not built yet")
+    if skip_creator_check:
+        assertions.append("creator-reputation check skipped by operator")
     for a in assertions:
         journal.append(clock.now_ms(), "OPERATOR_ASSERTION", {"mint": mint, "assertion": a})
+    onchain_safety = safety
+    view = None
+    last_feed_ms = -10**15
+    feed_log: list[dict] = []
 
     venue = JupiterPaperVenue(clock, client, lambda _t: safety.decimals)
     bot = Bot(cfg, venue, journal, clock)
@@ -118,9 +142,31 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
     while clock.now_ms() < end:
         t0 = clock.now_ms()
         venue.process()
+        if feeds_on and clock.now_ms() - last_feed_ms >= feed_every_s * 1000:
+            last_feed_ms = clock.now_ms()
+            p = s = None
+            try:
+                p = bitquery.reading(mint, clock.now_ms())
+            except VenueError as e:
+                errors.append(f"bitquery: {e}")
+            try:
+                s = codex.readings(SOLANA, [mint], clock.now_ms()).get(mint)
+            except VenueError as e:
+                errors.append(f"codex: {e}")
+            view = consensus(mint, SOLANA, clock.now_ms(), cfg.feed_max_age_ms, p, s)
+            safety = apply_view(onchain_safety if not assert_sellable else
+                                dataclasses.replace(onchain_safety, sell_simulation_ok=True), view)
+            feed_log.append({"ts": clock.now_ms(), "stage": view.stage, "liquidity_usd": str(view.liquidity_usd),
+                             "creator": [view.creator_tokens_created, view.creator_tokens_migrated],
+                             "notes": list(view.notes)})
+            journal.append(clock.now_ms(), "FEED_VIEW", feed_log[-1])
+        elif feeds_on and view is not None and clock.now_ms() - view.ts_ms > cfg.feed_max_age_ms:
+            safety = dataclasses.replace(safety, venue_stage=None)  # feed went stale -> unknown
         try:
             snap = build_snapshot(client, mint, safety.decimals, usd, venue.priority_fee_lamports,
                                   clock.now_ms(), quote_rtts)
+            if feeds_on and view is not None:
+                snap = dataclasses.replace(snap, liquidity_usd=view.liquidity_usd, liquidity_is_estimate=False)
             bench.series.append(snap)
             bot.ingest(snap, dataclasses.replace(safety, ts_ms=clock.now_ms()))
         except VenueError as e:
@@ -163,7 +209,7 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
         "quote_rtt_ms": {"n": len(quote_rtts), "p50": percentile(quote_rtts, 50),
                          "p95": percentile(quote_rtts, 95), "p99": percentile(quote_rtts, 99)},
         "bot_latency": bot.latency.summary(),
-        "halts": sorted(bot.halts), "errors": errors[:20],
+        "halts": sorted(bot.halts), "errors": errors[:20], "feeds_on": feeds_on, "feed_views": feed_log[-5:],
         "markouts": summarize(rows), "markout_rows": [row_to_dict(r) for r in rows],
     }
     (out_dir / f"live-paper-{stamp}.json").write_text(json.dumps(report, indent=2, default=str))
@@ -179,13 +225,14 @@ def main(argv=None) -> int:
     ap.add_argument("--max-data-age-ms", type=int, default=None)
     ap.add_argument("--operator-asserts-graduated", action="store_true")
     ap.add_argument("--operator-asserts-sellable", action="store_true")
+    ap.add_argument("--skip-creator-check", action="store_true")
     ap.add_argument("--out", default="reports")
     a = ap.parse_args(argv)
     keyed = bool(JupiterClient().api_key)
     tick = a.tick_s or (1.0 if keyed else 8.0)
     age = a.max_data_age_ms or (3000 if keyed else int(tick * 1000 * 2.5))
     rep = run(a.mint, Decimal(a.usd), a.seconds, tick, age, a.operator_asserts_graduated,
-              a.operator_asserts_sellable, Path(a.out))
+              a.operator_asserts_sellable, Path(a.out), skip_creator_check=a.skip_creator_check)
     print(json.dumps({k: v for k, v in rep.items() if k != "markout_rows"}, indent=2, default=str))
     return 0
 

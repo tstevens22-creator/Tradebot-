@@ -34,6 +34,9 @@ tradebot/
   venues/paper_dex.py simulated AMM with fault injection
   venues/jupiter.py   Jupiter Swap V2 quotes + paper venue on live prices
   data/solana_rpc.py  read-only on-chain token safety and tx status
+  data/bitquery.py    pump.fun lifecycle (primary feed)
+  data/codex.py       stage, liquidity, holders, creator history (secondary feed)
+  data/feeds.py       fail-closed cross-check of the two feeds
   live_paper.py       paper-trade a real token on live data
   adversarial/        daily scenario runner + report
 ```
@@ -46,6 +49,6 @@ python -m tradebot.adversarial.daily --out reports
 # paper trading on LIVE Jupiter prices (nothing is signed or sent):
 python -m tradebot.live_paper --mint <SOLANA_MINT> --usd 20 --seconds 90
 ```
-Optional env: `JUPITER_API_KEY` (free; keyless is 0.5 req/s), `SOLANA_RPC_URL` (paid RPC recommended).
+Optional env: `JUPITER_API_KEY` (free; keyless is 0.5 req/s), `SOLANA_RPC_URL` (paid RPC recommended), `BITQUERY_API_KEY` + `CODEX_API_KEY` (turn on the launchpad/creator feeds).
 
 Secrets (e.g. `BIRDEYE_API_KEY`) come from the environment only. The config loader rejects key-like fields.

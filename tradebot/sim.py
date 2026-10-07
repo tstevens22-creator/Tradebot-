@@ -29,6 +29,8 @@ PAPER_CONFIG: dict[str, Any] = {
     "max_entry_price_impact_bps": "150", "max_data_age_ms": 3000, "min_edge_buffer_bps": "50",
     "reject_mint_authority": True, "reject_freeze_authority": True, "max_transfer_tax_bps": "0",
     "max_top10_holder_pct": "0.5", "require_sell_simulation": True,
+    "require_creator_history": True, "creator_max_tokens_created": 20, "creator_min_graduation_ratio": "0.2",
+    "feed_max_age_ms": 30000,
     "max_priority_fee_lamports": 100_000, "emergency_max_priority_fee_lamports": 1_000_000,
     "max_exit_attempts": 4, "exit_retry_backoff_ms": 500, "exit_failed_probe_interval_s": 30, "exit_slippage_ladder_bps": [100, 300, 600, 1000],
     "emergency_max_slippage_bps": "1500", "unknown_resolution_timeout_s": 90, "cooldown_after_stop_s": 300,
@@ -49,7 +51,7 @@ def paper_config(**overrides: Any) -> RiskConfig:
 def safe_token(token: str, ts: int, chain: str = SOLANA, **kw: Any) -> TokenSafety:
     base = dict(token=token, decimals=6 if chain == SOLANA else 18, mint_authority=False, freeze_authority=False,
                 transfer_tax_bps=Decimal(0), top10_holder_pct=Decimal("0.2"), sell_simulation_ok=True, ts_ms=ts,
-                chain=chain, venue_stage=STAGE_AMM)
+                chain=chain, venue_stage=STAGE_AMM, creator_tokens_created=1, creator_tokens_migrated=1)
     base.update(kw)
     return TokenSafety(**base)
 

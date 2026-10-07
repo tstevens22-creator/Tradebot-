@@ -99,6 +99,10 @@ class RiskConfig:
     max_transfer_tax_bps: Decimal
     max_top10_holder_pct: Decimal
     require_sell_simulation: bool
+    require_creator_history: bool  # unknown creator history -> reject
+    creator_max_tokens_created: int  # more launches than this = serial launcher -> reject
+    creator_min_graduation_ratio: Decimal  # migrated/created below this -> reject
+    feed_max_age_ms: int  # launchpad/creator feed readings older than this are unknown
 
     # --- chain fees -----------------------------------------------------
     max_priority_fee_lamports: int
@@ -181,6 +185,7 @@ def _validate(c: RiskConfig) -> None:
         "vanish_window_s", "vanish_spread_bps", "vanish_liquidity_drop_pct",
         "vanish_volatility_bps", "recovery_healthy_observations", "max_open_positions",
         "unknown_resolution_timeout_s", "markout_benchmark_tolerance_ms",
+        "creator_max_tokens_created", "feed_max_age_ms",
     ]
     for name in pos:
         req(getattr(c, name) > 0, f"{name} must be > 0")
@@ -193,6 +198,7 @@ def _validate(c: RiskConfig) -> None:
         f"scale_out triggers must be >= {HARD_MIN_PROFIT_EXIT_PCT} (hard limit: no profit-taking below 30%)")
     req(c.stress_gap_multiplier >= 1, "stress_gap_multiplier must be >= 1")
     req(c.max_concentration_pct <= 1, "max_concentration_pct is a fraction <= 1")
+    req(0 <= c.creator_min_graduation_ratio <= 1, "creator_min_graduation_ratio is a fraction in [0,1]")
     req(c.max_drawdown_pct < 1, "max_drawdown_pct is a fraction < 1")
     if c.trailing_stop_pct is not None:
         req(0 < c.trailing_stop_pct < 1, "trailing_stop_pct must be in (0,1) or null")
