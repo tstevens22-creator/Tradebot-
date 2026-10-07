@@ -1,0 +1,63 @@
+# LIVE TEMPLATE -- intentionally incomplete. It will NOT load until every
+# required setting is explicitly decided by the account owner (see
+# docs/04_INPUT_CHECKLIST.md). There are no defaults: the loader lists every
+# missing key in one error. Even when complete, live mode also needs
+# TRADEBOT_LIVE_ACK=<config hash>, AND a live venue adapter, which does not exist yet.
+
+mode = "live"
+live_trading_authorized = false   # must be set to true by the owner, deliberately
+
+trigger_price_source = "executable_bid"   # indicative is forbidden in live
+target_basis = "net_pnl"
+
+# --- REQUIRED: fill in every value below, then uncomment ---------------------
+# stop_loss_pct =
+# take_profit_pct =
+# trailing_stop_pct =            # number or null (disabled), but must be present
+# max_holding_seconds =          # integer or null
+# scale_outs = []                # [[trigger_pct, fraction_of_original], ...]
+# per_trade_risk_usd =
+# max_position_usd =
+# max_total_exposure_usd =
+# max_concentration_pct =
+# max_open_positions =
+# stress_gap_multiplier =
+# max_stressed_loss_usd =
+# allow_average_down = false
+# daily_loss_limit_usd =
+# max_drawdown_pct =
+# starting_equity_usd =
+# min_liquidity_usd =
+# max_spread_bps =
+# max_entry_slippage_bps =
+# max_entry_price_impact_bps =
+# max_data_age_ms =
+# min_edge_buffer_bps =
+# reject_mint_authority = true
+# reject_freeze_authority = true
+# max_transfer_tax_bps =
+# max_top10_holder_pct =
+# require_sell_simulation = true
+# max_priority_fee_lamports =
+# emergency_max_priority_fee_lamports =
+# max_exit_attempts =
+# exit_retry_backoff_ms =
+# exit_failed_probe_interval_s =  # integer or null (operator-only recovery)
+# exit_slippage_ladder_bps = []
+# emergency_max_slippage_bps =
+# unknown_resolution_timeout_s =
+# cooldown_after_stop_s =
+# vanish_adverse_move_pct =
+# vanish_window_s =
+# vanish_spread_bps =
+# vanish_liquidity_drop_pct =
+# vanish_volatility_bps =
+# vanish_emergency_policy =       # "exit_all" | "exit_if_loss" | "hold_protected"
+# recovery_healthy_observations =
+# recovery_requires_manual_ack = true
+# budget_detect_to_decision_ms =
+# budget_decision_to_submit_ms =
+# budget_exit_confirm_ms =
+# markout_horizons_s = [1, 5, 10]
+# markout_benchmark_tolerance_ms =
+# markout_adverse_threshold_bps =
