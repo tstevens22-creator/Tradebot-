@@ -9,8 +9,10 @@ Facts from the V2 OpenAPI spec (verified 2026-10-07):
   * amounts are strings in the token's smallest unit
   * ``priceImpact`` is in percentage points (-0.1 == -0.1%)
   * ``feeBps`` is the total fee rate, collected in ``feeMint``
-  * keyless access: 0.5 requests/second. A free API key (``x-api-key``)
-    raises that limit, and is needed for real-time protection.
+  * rate limits per ORGANISATION, 60 s sliding window (docs/portal/rate-limits):
+    keyless 0.5 rps, Free key 1 rps, Developer 10, Launch 50, Pro 150.
+    /execute has a separate bucket. On 429, ``x-ratelimit-reset`` (unix
+    seconds) says when a slot frees: we stop calling until then.
 
 Accounting (conservative):
   * USD amounts are USDC (6 decimals). Every quote is USDC <-> token.
@@ -102,11 +104,16 @@ class JupiterClient:
     def __init__(self, api_key: Optional[str] = None, base_url: str = BASE_URL,
                  bucket: Optional[TokenBucket] = None, timeout_s: float = 3.0,
                  opener: Optional[Callable[[urllib.request.Request, float], bytes]] = None,
-                 now_ms: Callable[[], int] = lambda: time.time_ns() // 1_000_000):
+                 now_ms: Callable[[], int] = lambda: time.time_ns() // 1_000_000,
+                 rps: Optional[float] = None):
         self.api_key = api_key if api_key is not None else os.environ.get("JUPITER_API_KEY")
-        # Keyless: 0.5 req/s. Keep one request in reserve for exits.
-        self.bucket = bucket or (TokenBucket(rate_per_s=0.5, capacity=3, reserve=1) if not self.api_key
-                                 else TokenBucket(rate_per_s=5.0, capacity=10, reserve=3))
+        # Plan limit: JUPITER_RPS overrides (e.g. 10 for Developer); else keyless 0.5 / Free key 1.
+        env_rps = os.environ.get("JUPITER_RPS")
+        self.rps = rps if rps is not None else (float(env_rps) if env_rps else (1.0 if self.api_key else 0.5))
+        # Budget 90% of the plan to stay clear of the limit; keep one request for exits.
+        self.bucket = bucket or TokenBucket(rate_per_s=self.rps * 0.9, capacity=max(3, int(self.rps * 3)), reserve=1)
+        self.blocked_until_ms = 0
+        self.rate_limited_count = 0
         self.base_url, self.timeout_s = base_url, timeout_s
         self._open = opener or (lambda req, t: urllib.request.urlopen(req, timeout=t).read())
         self.now_ms = now_ms
@@ -118,6 +125,8 @@ class JupiterClient:
               priority: bool = False) -> OrderQuote:
         if amount <= 0:
             raise JupiterError("amount must be > 0")
+        if self.now_ms() < self.blocked_until_ms:
+            raise RateLimited("Jupiter 429 backoff in effect")
         if not self.bucket.try_take(priority):
             raise RateLimited("Jupiter rate budget exhausted (local)")
         q = urllib.parse.urlencode({"inputMint": input_mint, "outputMint": output_mint,
@@ -131,6 +140,13 @@ class JupiterClient:
             raw = self._open(req, self.timeout_s)
         except urllib.error.HTTPError as e:
             if e.code == 429:
+                self.rate_limited_count += 1
+                reset = (e.headers.get("x-ratelimit-reset") if e.headers is not None else None)
+                try:
+                    wait_until = int(float(reset) * 1000)
+                except (TypeError, ValueError):
+                    wait_until = self.now_ms() + 1000  # documented fallback: fixed 1 s
+                self.blocked_until_ms = max(self.blocked_until_ms, min(wait_until, self.now_ms() + 60_000))
                 raise RateLimited("Jupiter 429") from None
             raise JupiterError(f"Jupiter HTTP {e.code}") from None
         except (TimeoutError, OSError) as e:

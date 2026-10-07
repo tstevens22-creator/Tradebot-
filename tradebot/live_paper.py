@@ -14,9 +14,11 @@ Sellability always needs --operator-asserts-sellable until signed-tx sell
 simulation exists (live step). Without these flags the gate rejects the
 token, which is correct behavior.
 
-Keyless Jupiter allows only 0.5 req/s, so ticks are slow and the data-age
-limit must be relaxed for this demo (reported). Set JUPITER_API_KEY for
-real-time freshness.
+Jupiter plan limits: keyless 0.5 rps, Free key 1 rps, Developer 10 rps
+(set JUPITER_RPS to your plan). Each tick needs ~3 quotes (bid, ask, and the
+protection quote while holding), so ticks are spaced to fit the plan. If that
+spacing exceeds the 3 s freshness limit, the limit is relaxed for this run
+and reported.
 """
 from __future__ import annotations
 
@@ -97,9 +99,9 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
     journal = Journal(str(out_dir / f"live-paper-{stamp}.db"), cfg.config_hash)
 
     warnings: list[str] = []
-    if not client.api_key:
-        warnings.append(f"Keyless Jupiter (0.5 req/s): ticks every {tick_s}s, data-age limit relaxed to "
-                        f"{max_data_age_ms} ms (production: 3000 ms with an API key).")
+    if max_data_age_ms > 3000:
+        warnings.append(f"Jupiter plan allows {client.rps} req/s: ticks every {tick_s:.1f}s, data-age limit "
+                        f"relaxed to {max_data_age_ms} ms (production target 3000 ms needs ~10 req/s).")
     from .data.bitquery import BitqueryClient
     from .data.codex import CodexClient
     from .data.feeds import apply_view, consensus
@@ -174,6 +176,7 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
         bot.tick()
         ticks += 1
         if decision is None and mint in bot.snapshots:
+            sleep(1.0 / (client.rps * 0.9))  # let the rate budget refill so the exact-size entry quote fits
             decision = bot.propose({"proposal_id": f"live-paper-{stamp}", "chain": SOLANA, "token": mint,
                                     "usd_size": str(usd), "expected_edge_bps": "500"})
         sleep(max(0.0, tick_s - (clock.now_ms() - t0) / 1000))
@@ -209,7 +212,7 @@ def run(mint: str, usd: Decimal, seconds: int, tick_s: float, max_data_age_ms: i
         "quote_rtt_ms": {"n": len(quote_rtts), "p50": percentile(quote_rtts, 50),
                          "p95": percentile(quote_rtts, 95), "p99": percentile(quote_rtts, 99)},
         "bot_latency": bot.latency.summary(),
-        "halts": sorted(bot.halts), "errors": errors[:20], "feeds_on": feeds_on, "feed_views": feed_log[-5:],
+        "halts": sorted(bot.halts), "errors": errors[:20], "jupiter_429s": client.rate_limited_count, "feeds_on": feeds_on, "feed_views": feed_log[-5:],
         "markouts": summarize(rows), "markout_rows": [row_to_dict(r) for r in rows],
     }
     (out_dir / f"live-paper-{stamp}.json").write_text(json.dumps(report, indent=2, default=str))
@@ -228,9 +231,10 @@ def main(argv=None) -> int:
     ap.add_argument("--skip-creator-check", action="store_true")
     ap.add_argument("--out", default="reports")
     a = ap.parse_args(argv)
-    keyed = bool(JupiterClient().api_key)
-    tick = a.tick_s or (1.0 if keyed else 8.0)
-    age = a.max_data_age_ms or (3000 if keyed else int(tick * 1000 * 2.5))
+    rps = JupiterClient().rps
+    quotes_per_tick = 3
+    tick = a.tick_s or max(1.0, quotes_per_tick / (rps * 0.9))
+    age = a.max_data_age_ms or max(3000, int(tick * 1000 * 2.5))
     rep = run(a.mint, Decimal(a.usd), a.seconds, tick, age, a.operator_asserts_graduated,
               a.operator_asserts_sellable, Path(a.out), skip_creator_check=a.skip_creator_check)
     print(json.dumps({k: v for k, v in rep.items() if k != "markout_rows"}, indent=2, default=str))

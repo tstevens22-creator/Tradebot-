@@ -184,3 +184,36 @@ def test_paper_submit_is_idempotent():
     clock.advance(1500)
     v.process()
     assert v.balance(BONK) == first
+
+
+def test_rate_limit_tiers_from_docs(monkeypatch):
+    monkeypatch.delenv("JUPITER_RPS", raising=False)
+    assert JupiterClient(api_key="").rps == 0.5  # keyless
+    assert JupiterClient(api_key="k").rps == 1.0  # Free key
+    monkeypatch.setenv("JUPITER_RPS", "10")
+    assert JupiterClient(api_key="k").rps == 10.0  # Developer plan
+
+
+def test_429_honours_ratelimit_reset_header():
+    t = {"now": 1_000_000}
+    calls = []
+
+    def opener(req, timeout):
+        calls.append(1)
+        hdrs = {"x-ratelimit-reset": str((t["now"] + 5_000) / 1000)}
+        import email.message
+        m = email.message.Message()
+        for k, v in hdrs.items():
+            m[k] = v
+        raise urllib.error.HTTPError(req.full_url, 429, "rate", m, None)
+
+    c = JupiterClient(api_key="k", bucket=free_bucket(), opener=opener, now_ms=lambda: t["now"])
+    with pytest.raises(RateLimited):
+        c.quote_buy(BONK, Decimal(1), 5)
+    with pytest.raises(RateLimited):
+        c.quote_buy(BONK, Decimal(1), 5)  # inside the backoff window: no request sent
+    assert len(calls) == 1 and c.rate_limited_count == 1
+    t["now"] += 5_001
+    with pytest.raises(RateLimited):
+        c.quote_buy(BONK, Decimal(1), 5)  # window passed: tries again
+    assert len(calls) == 2

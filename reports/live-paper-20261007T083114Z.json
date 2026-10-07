@@ -1,0 +1,54 @@
+{
+  "mint": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+  "usd": "20",
+  "seconds": 60,
+  "ticks": 18,
+  "config_hash": "96d8ef61598b877f",
+  "mode": "PAPER on live Jupiter quotes; nothing signed or sent",
+  "warnings": [
+    "Jupiter plan allows 1.0 req/s: ticks every 3.3s, data-age limit relaxed to 8333 ms (production target 3000 ms needs ~10 req/s).",
+    "No BITQUERY_API_KEY/CODEX_API_KEY: stage must be operator-asserted and liquidity is an ESTIMATE implied from quote price impact.",
+    "Creator-reputation check SKIPPED by operator (--skip-creator-check)."
+  ],
+  "operator_assertions": [
+    "stage=amm (graduated) asserted by operator; no feed keys configured",
+    "sellable asserted by operator; on-chain sell simulation not built yet",
+    "creator-reputation check skipped by operator"
+  ],
+  "onchain_safety": {
+    "decimals": 5,
+    "mint_authority": false,
+    "freeze_authority": false,
+    "transfer_tax_bps": "0",
+    "top10_holder_pct": "None",
+    "hazards": []
+  },
+  "decision": {
+    "approved": false,
+    "reasons": [
+      "LOW_LIQUIDITY: 41704.15064455904369410870180 < 50000",
+      "NO_EXEC_QUOTE: need executable quote for the exact size",
+      "HOLDER_CONCENTRATION: None"
+    ],
+    "planned_loss_usd": "2.1643"
+  },
+  "fills": [],
+  "position_qty": "0",
+  "realized_pnl_usd": "0.000000",
+  "unrealized_at_last_bid_usd": null,
+  "last_round_trip_bps": "34.15",
+  "quote_rtt_ms": {
+    "n": 36,
+    "p50": 296,
+    "p95": 586,
+    "p99": 667
+  },
+  "bot_latency": {},
+  "halts": [],
+  "errors": [],
+  "jupiter_429s": 0,
+  "feeds_on": false,
+  "feed_views": [],
+  "markouts": {},
+  "markout_rows": []
+}

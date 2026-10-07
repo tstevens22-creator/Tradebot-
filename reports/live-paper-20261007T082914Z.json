@@ -1,0 +1,73 @@
+{
+  "mint": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+  "usd": "20",
+  "seconds": 60,
+  "ticks": 60,
+  "config_hash": "171328a8021b1ebe",
+  "mode": "PAPER on live Jupiter quotes; nothing signed or sent",
+  "warnings": [
+    "No BITQUERY_API_KEY/CODEX_API_KEY: stage must be operator-asserted and liquidity is an ESTIMATE implied from quote price impact.",
+    "Creator-reputation check SKIPPED by operator (--skip-creator-check)."
+  ],
+  "operator_assertions": [
+    "stage=amm (graduated) asserted by operator; no feed keys configured",
+    "sellable asserted by operator; on-chain sell simulation not built yet",
+    "creator-reputation check skipped by operator"
+  ],
+  "onchain_safety": {
+    "decimals": 5,
+    "mint_authority": false,
+    "freeze_authority": false,
+    "transfer_tax_bps": "0",
+    "top10_holder_pct": "None",
+    "hazards": []
+  },
+  "decision": {
+    "approved": false,
+    "reasons": [
+      "HOLDER_CONCENTRATION: None"
+    ],
+    "planned_loss_usd": "2.0762"
+  },
+  "fills": [],
+  "position_qty": "0",
+  "realized_pnl_usd": "0.000000",
+  "unrealized_at_last_bid_usd": null,
+  "last_round_trip_bps": "34.34",
+  "quote_rtt_ms": {
+    "n": 56,
+    "p50": 289,
+    "p95": 515,
+    "p99": 566
+  },
+  "bot_latency": {},
+  "halts": [
+    "VANISH:DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"
+  ],
+  "errors": [
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429",
+    "snapshot: Jupiter 429"
+  ],
+  "feeds_on": false,
+  "feed_views": [],
+  "markouts": {},
+  "markout_rows": []
+}
