@@ -13,7 +13,12 @@ placeholders, **not recommendations**.
      - (1a) **Solana and Base.** Base needs a separate EVM execution adapter, and its risks are in loss register section F.
      - (1b) **pump.fun only after graduation.** Bonding-curve tokens are rejected. A migration in progress triggers vanish.
      - (1c) **Signals fully automated.** No public trending API was found for FOMO or Coinbase, so an automated stand-in feed is needed (e.g. Birdeye trending/new-listing data on Solana and Base; endpoint to be verified). Automated proposals still pass the deterministic risk gate.
-2. Which executable-quote source? Birdeye price is indicative only. Proposed: Jupiter quotes (Solana); a Base DEX aggregator or router quote (to be chosen).
+2. **Executable-quote source. Proposed (2026-10-07); owner suggested Coinbase Advanced:**
+   - **Solana:** Jupiter quote + execution (Coinbase's app also routes Solana DEX trades via Jupiter).
+   - **Base:** Coinbase CDP Swap API (0x-powered) or 0x directly. Must verify that it uses **exact-amount** approvals (loss register F5).
+   - **Coinbase Advanced Trade API:** a centralized order book for Coinbase-*listed* assets (~300). No evidence was found that it can quote or trade the in-app DEX tokens, so it does **not** cover fresh pump.fun/Base meme coins. Optional third venue for listed coins. Advantage: **exchange-held stop-limit orders** that protect positions while the bot is offline. Caveat: a stop-limit may not fill on a gap. It is an order-book model (real partial fills, real cancels), so it needs its own adapter.
+   - **Rule:** the quote must come from the same path that executes. A quote from one router is not executable on another.
+   - **Open (2a):** include Coinbase Advanced as a third venue for listed coins?
 3. Transaction submission path: public RPC, a private/MEV-protected relay, or a bundle service? How many RPCs for reconciliation quorum?
 4. Is there an existing strategy/signal codebase to integrate? Please attach it. Nothing has been audited yet because the repo was empty.
 
