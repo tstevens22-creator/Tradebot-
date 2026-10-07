@@ -16,9 +16,9 @@ TOKEN = "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr"
 
 PAPER_CONFIG: dict[str, Any] = {
     "mode": "paper", "live_trading_authorized": False,
-    "stop_loss_pct": "0.08", "take_profit_pct": "0.20", "trigger_price_source": "executable_bid",
+    "stop_loss_pct": "0.10", "take_profit_pct": "0.30", "trigger_price_source": "executable_bid",
     "target_basis": "net_pnl", "trailing_stop_pct": "0.10", "max_holding_seconds": 3600,
-    "scale_outs": [["0.10", "0.5"]],
+    "scale_outs": [],
     "per_trade_risk_usd": "20", "max_position_usd": "200", "max_total_exposure_usd": "600",
     "max_concentration_pct": "0.5", "max_open_positions": 5, "stress_gap_multiplier": "3",
     "max_stressed_loss_usd": "60", "allow_average_down": False,

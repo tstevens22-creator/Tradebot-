@@ -103,11 +103,21 @@ def _finish(s: Sim, t: Tracker, r: Result, planned: Decimal = Decimal(0)) -> Res
 
 # ---------------------------------------------------------------- scenarios
 def baseline(seed: int) -> Result:
-    s = Sim(seed=seed); t = Tracker(s); r = Result("baseline", "entry then +25% move -> take profit")
+    s = Sim(seed=seed); t = Tracker(s)
+    r = Result("baseline", "+25% move must be HELD (30% floor); gradual climb past +30% -> take profit")
     t.step(2); d = t.propose(); t.step(2)
-    s.venue.shock(TOKEN, Decimal("0.25")); t.step(15)
-    if s.position().qty != 0:
-        r.violations.append("TP not executed")
+    s.venue.shock(TOKEN, Decimal("0.25")); t.step(65)  # hold past the volatility window
+    if s.position().qty == 0:
+        r.violations.append("profit taken below the 30% floor")
+    for _ in range(6):  # slow climb: +5% per 15 s stays under the volatility breaker
+        if s.position().qty == 0:
+            break
+        s.venue.shock(TOKEN, Decimal("0.05")); t.step(15)
+    tps = [o for o in s.bot.engine.orders.values() if o.purpose.name == "TAKE_PROFIT" and o.fills]
+    if s.position().qty != 0 or not tps:
+        r.violations.append("TP not executed after crossing +30%")
+    elif s.bot.portfolio.total_realized_usd < Decimal(30):
+        r.violations.append(f"TP realized {s.bot.portfolio.total_realized_usd:.2f} < 30% of $100")
     return _finish(s, t, r, d.planned_loss_usd)
 
 

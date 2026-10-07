@@ -7,18 +7,18 @@
 
 ## Findings: financial impact beyond budget
 
-- **gap_through_stop**: realized gap loss 35.34 exceeded stressed budget 24.72 (stress_gap_multiplier=3 does not cover a 35% gap)
+- **gap_through_stop**: realized gap loss 35.34 exceeded stressed budget 30.72 (stress_gap_multiplier=3 does not cover a 35% gap)
 
 ## Scenario results
 
 | Scenario | Pass | Realized P&L | Planned loss | Residual qty | Unprotected | Halts |
 |---|---|---|---|---|---|---|
-| baseline | ✅ | 24.3561 | 8.7172 | 0.0000 | False | - |
-| gap_through_stop | ✅ | -35.3444 | 8.7172 | 0.0000 | False | VANISH |
+| baseline | ✅ | 30.5749 | 10.7172 | 0.0000 | False | - |
+| gap_through_stop | ✅ | -35.3444 | 10.7172 | 0.0000 | False | VANISH |
 | submit_timeout_lands | ✅ | 0.0000 | 0.0000 | 996.5060 | False | - |
 | crash_mid_submission | ✅ | 0.0000 | 0.0000 | 0.0000 | False | - |
-| rug_pull | ✅ | -1.4014 | 8.7172 | 0.0000 | False | VANISH |
-| honeypot | ✅ | 0.0000 | 8.7172 | 996.5060 | True | EXIT_FAILED |
+| rug_pull | ✅ | -1.4014 | 10.7172 | 0.0000 | False | VANISH |
+| honeypot | ✅ | 0.0000 | 10.7172 | 996.5060 | True | EXIT_FAILED |
 | stale_feed | ✅ | -0.5191 | 0.0000 | 0.0000 | False | VANISH |
 | rate_limit_exhaustion | ✅ | -12.4592 | 0.0000 | 0.0000 | False | EXIT_QUOTES_UNAVAILABLE |
 | fee_spike | ✅ | 0.0000 | 0.0000 | 0.0000 | False | - |
@@ -33,7 +33,7 @@
 
 ## Notes and financial impact
 
-- **gap_through_stop**: planned loss 8.72, stressed 24.72, realized 35.34
+- **gap_through_stop**: planned loss 10.72, stressed 30.72, realized 35.34
 - **honeypot**: position remains UNPROTECTED and unsellable: full notional at risk
 - **rate_limit_exhaustion**: quote errors: 8, rate-limited submits: 3
 - **rug_pull**: residual risk: a rug inside one block cannot be prevented, only exited after
@@ -53,8 +53,8 @@
 | Horizon | Fills | Unknown | Mean bps | Median bps | Worst bps | Adverse | Violations |
 |---|---|---|---|---|---|---|---|
 | +1s | 21 | 0 | 91.64 | -49.91 | -89.33 | 9 | 0 |
-| +5s | 21 | 4 | -337.08 | -69.67 | -3545.29 | 15 | 0 |
-| +10s | 21 | 9 | -252.9 | -205.04 | -3936.37 | 9 | 0 |
+| +5s | 21 | 4 | -335.63 | -69.67 | -3545.29 | 15 | 0 |
+| +10s | 21 | 9 | -250.84 | -205.04 | -3936.37 | 9 | 0 |
 
 ### By purpose (entry vs exit quality)
 
@@ -64,8 +64,8 @@
 | EMERGENCY | +5s | 5 | 1 | 799.87 | 3 |
 | EMERGENCY | +10s | 5 | 3 | 2947.83 | 0 |
 | ENTRY | +1s | 12 | 0 | -53.2 | 1 |
-| ENTRY | +5s | 12 | 1 | -802.67 | 10 |
-| ENTRY | +10s | 12 | 4 | -1103.75 | 7 |
+| ENTRY | +5s | 12 | 1 | -800.43 | 10 |
+| ENTRY | +10s | 12 | 4 | -1100.66 | 7 |
 | STOP_LOSS | +1s | 3 | 0 | -50.22 | 3 |
 | STOP_LOSS | +5s | 3 | 2 | -50.21 | 1 |
 | STOP_LOSS | +10s | 3 | 2 | -50.21 | 1 |

@@ -5,6 +5,19 @@ The config is a frozen dataclass whose hash is stamped on every journal event.
 No runtime path, the AI included, can mutate limits, widen stops, or suppress
 protective exits.
 
+## Owner-mandated hard limits (code constants, not config)
+
+Defined in `tradebot/config.py`. No config file or AI proposal can loosen them. Changing them requires a code change.
+
+| Constant | Value | Effect |
+|---|---|---|
+| `HARD_MAX_STOP_LOSS_PCT` | **0.10** | `stop_loss_pct` may be tighter than 10%, never wider. The stop fires when the **worse** of price return and net P&L (after estimated exit costs) reaches −10%. |
+| `HARD_MIN_PROFIT_EXIT_PCT` | **0.30** | `take_profit_pct` and every scale-out trigger must be ≥ 30%. At runtime, take-profit, scale-out and trailing-stop sales are blocked until the **worse** of price return and net P&L is ≥ +30%. |
+
+The 30% floor applies only to **profit-taking** exits. It does **not** block protective exits: stop-loss, emergency/vanish exits, max-hold, and exit-failure probes.
+
+**What −10% does and does not guarantee:** the bot *starts* exiting at −10%. A price gap, a rug, or a failed or slow exit can realize a larger loss. The daily report shows a −35% gap realizing about −35%. No code can prevent that on an AMM.
+
 ## Settings
 
 All settings live in `tradebot/config.py`. Every one is required, and a missing
@@ -28,7 +41,7 @@ may be `null` (disabled), but they must still be written out.
 ## How conflicting rules are resolved
 
 1. **Exit precedence:** STOP_LOSS > EMERGENCY > TRAILING_STOP > MAX_HOLD > TAKE_PROFIT > SCALE_OUT.
-2. **A profit floor never blocks a protective exit.** The stop is evaluated on min(price return, net return).
+2. **The 30% profit floor never blocks a protective exit.** The stop is evaluated on min(price return, net return). The floor gates only TP, scale-out and trailing sales.
 3. **Halts never block exits.** A halt blocks new exposure only.
 4. **Fee caps never block exits.** Exits are bounded by the slippage ladder and the emergency cap instead.
 5. Config validation rejects: position cap > total cap; per-trade risk > daily limit; stressed budget < per-trade risk; ladder above the emergency cap or decreasing; scale-outs ≥ TP or summing above 100%; live mode with indicative triggers.

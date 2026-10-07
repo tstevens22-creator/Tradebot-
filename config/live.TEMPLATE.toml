@@ -11,11 +11,11 @@ trigger_price_source = "executable_bid"   # indicative is forbidden in live
 target_basis = "net_pnl"
 
 # --- REQUIRED: fill in every value below, then uncomment ---------------------
-# stop_loss_pct =
-# take_profit_pct =
+# stop_loss_pct =               # HARD LIMIT: <= 0.10 (losses cut at 10%)
+# take_profit_pct =             # HARD LIMIT: >= 0.30 (no profit-taking below 30%)
 # trailing_stop_pct =            # number or null (disabled), but must be present
 # max_holding_seconds =          # integer or null
-# scale_outs = []                # [[trigger_pct, fraction_of_original], ...]
+# scale_outs = []                # [[trigger_pct, fraction_of_original], ...]; triggers >= 0.30
 # per_trade_risk_usd =
 # max_position_usd =
 # max_total_exposure_usd =

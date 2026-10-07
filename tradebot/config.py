@@ -24,6 +24,16 @@ TRIGGER_SOURCES = ("executable_bid", "indicative")
 TARGET_BASES = ("price_return", "net_pnl")
 VANISH_POLICIES = ("exit_all", "exit_if_loss", "hold_protected")
 
+# ---------------------------------------------------------------------------
+# OWNER-MANDATED HARD LIMITS (2026-10-07). These are code constants, not config:
+# no config file, AI proposal or runtime path can loosen them. Changing them
+# needs a code change and review.
+#   * Losses are cut at 10%: the stop may be tighter than 10%, never wider.
+#   * Profit is never taken below +30%: take-profit, scale-outs and trailing
+#     stops cannot sell until the position is up at least 30%.
+HARD_MAX_STOP_LOSS_PCT = Decimal("0.10")
+HARD_MIN_PROFIT_EXIT_PCT = Decimal("0.30")
+
 # Fields that are optional *features* (null = disabled) but must still be explicit.
 NULLABLE = {"trailing_stop_pct", "max_holding_seconds", "exit_failed_probe_interval_s"}
 
@@ -167,7 +177,12 @@ def _validate(c: RiskConfig) -> None:
     for name in pos:
         req(getattr(c, name) > 0, f"{name} must be > 0")
 
-    req(c.stop_loss_pct < 1, "stop_loss_pct must be < 1 (fraction, e.g. 0.08 = 8%)")
+    req(c.stop_loss_pct <= HARD_MAX_STOP_LOSS_PCT,
+        f"stop_loss_pct must be <= {HARD_MAX_STOP_LOSS_PCT} (hard limit: losses cut at 10%)")
+    req(c.take_profit_pct >= HARD_MIN_PROFIT_EXIT_PCT,
+        f"take_profit_pct must be >= {HARD_MIN_PROFIT_EXIT_PCT} (hard limit: no profit-taking below 30%)")
+    req(all(s.trigger_pct >= HARD_MIN_PROFIT_EXIT_PCT for s in c.scale_outs),
+        f"scale_out triggers must be >= {HARD_MIN_PROFIT_EXIT_PCT} (hard limit: no profit-taking below 30%)")
     req(c.stress_gap_multiplier >= 1, "stress_gap_multiplier must be >= 1")
     req(c.max_concentration_pct <= 1, "max_concentration_pct is a fraction <= 1")
     req(c.max_drawdown_pct < 1, "max_drawdown_pct is a fraction < 1")

@@ -4,13 +4,13 @@
 
 mode = "paper"
 live_trading_authorized = false
-stop_loss_pct = "0.08"
-take_profit_pct = "0.20"
+stop_loss_pct = "0.10"
+take_profit_pct = "0.30"
 trigger_price_source = "executable_bid"
 target_basis = "net_pnl"
 trailing_stop_pct = "0.10"
 max_holding_seconds = 3600
-scale_outs = [["0.10", "0.5"]]
+scale_outs = []
 per_trade_risk_usd = "20"
 max_position_usd = "200"
 max_total_exposure_usd = "600"

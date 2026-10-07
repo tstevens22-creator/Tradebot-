@@ -100,12 +100,13 @@ def test_fills_not_double_counted_after_restart(tmp_path):
 
 
 def test_inflight_scale_out_not_repeated_after_restart(tmp_path):
-    s = Sim(journal_path=str(tmp_path / "j.db"))
+    cfg = paper_config(take_profit_pct="0.8", scale_outs=[["0.3", "0.5"]], vanish_volatility_bps="6000")
+    s = Sim(cfg=cfg, journal_path=str(tmp_path / "j.db"))
     s.run(2)
     s.propose()
     s.run(2)
     s.venue.faults.confirm_delay_ms = 3000
-    s.venue.shock(TOKEN, Decimal("0.13"))  # crosses the 10% scale-out, below TP
+    s.venue.shock(TOKEN, Decimal("0.40"))  # crosses the 30% scale-out, below TP
     s.run(1)
     assert any(o.purpose is Purpose.SCALE_OUT and not o.is_terminal for o in s.bot.engine.orders.values())
     s.restart()

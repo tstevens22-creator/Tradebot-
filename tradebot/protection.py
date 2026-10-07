@@ -9,6 +9,10 @@ Rules:
   * The stop is evaluated on the WORSE of price return and net P&L, so a
     favourable accounting basis can never suppress a protective exit.
   * Precedence: STOP > EMERGENCY > TRAIL > MAX_HOLD > TP > SCALE_OUT.
+  * Hard profit floor: profit-taking exits (TP, scale-out, trailing stop)
+    only fire when the CONSERVATIVE return (worse of price return and net
+    P&L) is >= HARD_MIN_PROFIT_EXIT_PCT (30%). The floor never blocks
+    protective exits (stop-loss, emergency/vanish, max hold).
   * Exit qty never exceeds confirmed qty minus qty already in flight.
 """
 from __future__ import annotations
@@ -17,7 +21,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-from .config import RiskConfig
+from .config import HARD_MIN_PROFIT_EXIT_PCT, RiskConfig
 from .models import EXIT_PRECEDENCE, Position, Purpose
 
 
@@ -62,15 +66,17 @@ def evaluate_exits(
             out.append(ExitIntent(pos.token, Purpose.STOP_LOSS, available,
                                   f"return {worst:.4f} <= -{cfg.stop_loss_pct}", trigger_price))
 
+        profit_floor_met = worst >= HARD_MIN_PROFIT_EXIT_PCT
+
         if cfg.trailing_stop_pct is not None:
             hw = max(pos.high_water_price or trigger_price, trigger_price)
             pos.high_water_price = hw
-            if trigger_price <= hw * (1 - cfg.trailing_stop_pct) and hw > pos.avg_cost:
+            if profit_floor_met and trigger_price <= hw * (1 - cfg.trailing_stop_pct):
                 out.append(ExitIntent(pos.token, Purpose.TRAILING_STOP, available,
                                       f"trail from {hw}", trigger_price))
 
         target_ret = price_ret if cfg.target_basis == "price_return" else net_ret
-        if target_ret is not None:
+        if target_ret is not None and profit_floor_met:
             if target_ret >= cfg.take_profit_pct:
                 out.append(ExitIntent(pos.token, Purpose.TAKE_PROFIT, available,
                                       f"{cfg.target_basis} {target_ret:.4f} >= {cfg.take_profit_pct}", trigger_price))

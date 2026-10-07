@@ -6,17 +6,17 @@
   "findings": [
     {
       "scenario": "gap_through_stop",
-      "finding": "realized gap loss 35.34 exceeded stressed budget 24.72 (stress_gap_multiplier=3 does not cover a 35% gap)"
+      "finding": "realized gap loss 35.34 exceeded stressed budget 30.72 (stress_gap_multiplier=3 does not cover a 35% gap)"
     }
   ],
   "invariant_violations": [],
   "results": [
     {
       "scenario": "baseline",
-      "description": "entry then +25% move -> take profit",
+      "description": "+25% move must be HELD (30% floor); gradual climb past +30% -> take profit",
       "passed": true,
-      "realized_pnl_usd": "24.3561",
-      "planned_loss_usd": "8.7172",
+      "realized_pnl_usd": "30.5749",
+      "planned_loss_usd": "10.7172",
       "residual_qty": "0E-25",
       "unprotected": false,
       "halts": [],
@@ -27,14 +27,14 @@
       "description": "-35% gap through an 8% stop",
       "passed": true,
       "realized_pnl_usd": "-35.3444",
-      "planned_loss_usd": "8.7172",
+      "planned_loss_usd": "10.7172",
       "residual_qty": "0E-25",
       "unprotected": false,
       "halts": [
         "VANISH:7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr"
       ],
       "notes": [
-        "planned loss 8.72, stressed 24.72, realized 35.34"
+        "planned loss 10.72, stressed 30.72, realized 35.34"
       ]
     },
     {
@@ -64,7 +64,7 @@
       "description": "90% liquidity removed while holding",
       "passed": true,
       "realized_pnl_usd": "-1.4014",
-      "planned_loss_usd": "8.7172",
+      "planned_loss_usd": "10.7172",
       "residual_qty": "0E-25",
       "unprotected": false,
       "halts": [
@@ -79,7 +79,7 @@
       "description": "sells blocked after entry",
       "passed": true,
       "realized_pnl_usd": "0.0000",
-      "planned_loss_usd": "8.7172",
+      "planned_loss_usd": "10.7172",
       "residual_qty": "996.5059852796835156930961366",
       "unprotected": true,
       "halts": [
@@ -289,7 +289,7 @@
     "+5s": {
       "fills": 21,
       "unknown": 4,
-      "mean_bps": -337.08,
+      "mean_bps": -335.63,
       "median_bps": -69.67,
       "worst_bps": -3545.29,
       "adverse": 15,
@@ -298,7 +298,7 @@
     "+10s": {
       "fills": 21,
       "unknown": 9,
-      "mean_bps": -252.9,
+      "mean_bps": -250.84,
       "median_bps": -205.04,
       "worst_bps": -3936.37,
       "adverse": 9,
@@ -348,7 +348,7 @@
       "+5s": {
         "fills": 12,
         "unknown": 1,
-        "mean_bps": -802.67,
+        "mean_bps": -800.43,
         "median_bps": -748.37,
         "worst_bps": -3545.29,
         "adverse": 10,
@@ -357,7 +357,7 @@
       "+10s": {
         "fills": 12,
         "unknown": 4,
-        "mean_bps": -1103.75,
+        "mean_bps": -1100.66,
         "median_bps": -1044.92,
         "worst_bps": -3936.37,
         "adverse": 7,
@@ -425,8 +425,8 @@
   },
   "markout_rows_sample": [
     {
-      "fill_id": "sig_27f25cc4bfaf019d4a175fd7",
-      "client_order_id": "e-57deb2a2439c44fe",
+      "fill_id": "sig_d98a92a68d72c33989cd47a6",
+      "client_order_id": "e-27854877d82d4c85",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -451,11 +451,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_27f25cc4bfaf019d4a175fd7",
-      "client_order_id": "e-57deb2a2439c44fe",
+      "fill_id": "sig_d98a92a68d72c33989cd47a6",
+      "client_order_id": "e-27854877d82d4c85",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -468,23 +468,23 @@
       "fill_qty": "996.5059852796835156930961366",
       "fee_usd": "0.01",
       "latency_submit_to_fill_ms": 450,
-      "benchmark_price": "0.1245643022030399324914093513",
-      "benchmark_ts_ms": 1790000008135,
+      "benchmark_price": "0.1248121867214777594950664121",
+      "benchmark_ts_ms": 1790000008085,
       "benchmark_kind": "pool_reserves_exact",
-      "benchmark_liquidity_usd": "250000.6228177924039468703394",
-      "markout_bps": "2412.907269751655989168886823",
-      "est_liquidation_value_usd": "124.1290726975165598916888683",
+      "benchmark_liquidity_usd": "250249.375000",
+      "markout_bps": "2437.609110379802656483032778",
+      "est_liquidation_value_usd": "124.3760911037980265648303278",
       "data_status": "OK",
       "confidence": "HIGH",
       "execution_grade": "OK",
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_27f25cc4bfaf019d4a175fd7",
-      "client_order_id": "e-57deb2a2439c44fe",
+      "fill_id": "sig_d98a92a68d72c33989cd47a6",
+      "client_order_id": "e-27854877d82d4c85",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -497,40 +497,40 @@
       "fill_qty": "996.5059852796835156930961366",
       "fee_usd": "0.01",
       "latency_submit_to_fill_ms": 450,
-      "benchmark_price": "0.1245643022030399324914093513",
-      "benchmark_ts_ms": 1790000013160,
+      "benchmark_price": "0.1248121867214777594950664121",
+      "benchmark_ts_ms": 1790000013110,
       "benchmark_kind": "pool_reserves_exact",
-      "benchmark_liquidity_usd": "250000.6228177924039468703394",
-      "markout_bps": "2412.907269751655989168886823",
-      "est_liquidation_value_usd": "124.1290726975165598916888683",
+      "benchmark_liquidity_usd": "250249.375000",
+      "markout_bps": "2437.609110379802656483032778",
+      "est_liquidation_value_usd": "124.3760911037980265648303278",
       "data_status": "OK",
       "confidence": "HIGH",
       "execution_grade": "OK",
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_cff02364cc7ea76a8777ed9c",
-      "client_order_id": "x-f94ffbb949444661",
+      "fill_id": "sig_a7a3f10df2aef825dd1eb708",
+      "client_order_id": "x-eaefdb9142d54614",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
       "strategy": "default",
       "purpose": "TAKE_PROFIT",
       "horizon_s": 1,
-      "fill_ts_ms": 1790000005525,
+      "fill_ts_ms": 1790000070850,
       "ts_uncertainty_ms": 400,
-      "fill_price": "0.1248121867214777594950664121",
+      "fill_price": "0.1310527960575516474698197327",
       "fill_qty": "996.5059852796835156930961366",
       "fee_usd": "0.01",
       "latency_submit_to_fill_ms": 450,
-      "benchmark_price": "0.1254389085220767000488433939",
-      "benchmark_ts_ms": 1790000007130,
+      "benchmark_price": "0.1317108539481805350512855638",
+      "benchmark_ts_ms": 1790000072455,
       "benchmark_kind": "pool_reserves_exact",
-      "benchmark_liquidity_usd": "250000.6228177924039468703394",
-      "markout_bps": "-50.21318967814333411067866699",
+      "benchmark_liquidity_usd": "262500.6539586820241442138564",
+      "markout_bps": "-50.21318967814333411067868302",
       "est_liquidation_value_usd": null,
       "data_status": "OK",
       "confidence": "HIGH",
@@ -538,28 +538,28 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_cff02364cc7ea76a8777ed9c",
-      "client_order_id": "x-f94ffbb949444661",
+      "fill_id": "sig_a7a3f10df2aef825dd1eb708",
+      "client_order_id": "x-eaefdb9142d54614",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
       "strategy": "default",
       "purpose": "TAKE_PROFIT",
       "horizon_s": 5,
-      "fill_ts_ms": 1790000005525,
+      "fill_ts_ms": 1790000070850,
       "ts_uncertainty_ms": 400,
-      "fill_price": "0.1248121867214777594950664121",
+      "fill_price": "0.1310527960575516474698197327",
       "fill_qty": "996.5059852796835156930961366",
       "fee_usd": "0.01",
       "latency_submit_to_fill_ms": 450,
-      "benchmark_price": "0.1254389085220767000488433939",
-      "benchmark_ts_ms": 1790000011150,
+      "benchmark_price": "0.1317108539481805350512855638",
+      "benchmark_ts_ms": 1790000076475,
       "benchmark_kind": "pool_reserves_exact",
-      "benchmark_liquidity_usd": "250000.6228177924039468703394",
-      "markout_bps": "-50.21318967814333411067866699",
+      "benchmark_liquidity_usd": "262500.6539586820241442138564",
+      "markout_bps": "-50.21318967814333411067868302",
       "est_liquidation_value_usd": null,
       "data_status": "OK",
       "confidence": "HIGH",
@@ -567,28 +567,28 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_cff02364cc7ea76a8777ed9c",
-      "client_order_id": "x-f94ffbb949444661",
+      "fill_id": "sig_a7a3f10df2aef825dd1eb708",
+      "client_order_id": "x-eaefdb9142d54614",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
       "strategy": "default",
       "purpose": "TAKE_PROFIT",
       "horizon_s": 10,
-      "fill_ts_ms": 1790000005525,
+      "fill_ts_ms": 1790000070850,
       "ts_uncertainty_ms": 400,
-      "fill_price": "0.1248121867214777594950664121",
+      "fill_price": "0.1310527960575516474698197327",
       "fill_qty": "996.5059852796835156930961366",
       "fee_usd": "0.01",
       "latency_submit_to_fill_ms": 450,
-      "benchmark_price": "0.1254389085220767000488433939",
-      "benchmark_ts_ms": 1790000016175,
+      "benchmark_price": "0.1317108539481805350512855638",
+      "benchmark_ts_ms": 1790000081500,
       "benchmark_kind": "pool_reserves_exact",
-      "benchmark_liquidity_usd": "250000.6228177924039468703394",
-      "markout_bps": "-50.21318967814333411067866699",
+      "benchmark_liquidity_usd": "262500.6539586820241442138564",
+      "markout_bps": "-50.21318967814333411067868302",
       "est_liquidation_value_usd": null,
       "data_status": "OK",
       "confidence": "HIGH",
@@ -596,11 +596,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_d91a098eeabbf2bff9d45101",
-      "client_order_id": "e-ed52072edeaa4704",
+      "fill_id": "sig_1cb9217f055cfe5c78249248",
+      "client_order_id": "e-6dd9473b72394eb5",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -625,11 +625,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_d91a098eeabbf2bff9d45101",
-      "client_order_id": "e-ed52072edeaa4704",
+      "fill_id": "sig_1cb9217f055cfe5c78249248",
+      "client_order_id": "e-6dd9473b72394eb5",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -654,11 +654,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_d91a098eeabbf2bff9d45101",
-      "client_order_id": "e-ed52072edeaa4704",
+      "fill_id": "sig_1cb9217f055cfe5c78249248",
+      "client_order_id": "e-6dd9473b72394eb5",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "BUY",
       "venue": "paper-dex",
@@ -683,11 +683,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_b6ae01636279943e02d6e7e0",
-      "client_order_id": "x-55023203eda24eb2",
+      "fill_id": "sig_65e54ba40d222e6b19454bd9",
+      "client_order_id": "x-442a4b25887b4d23",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
@@ -712,11 +712,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_b6ae01636279943e02d6e7e0",
-      "client_order_id": "x-55023203eda24eb2",
+      "fill_id": "sig_65e54ba40d222e6b19454bd9",
+      "client_order_id": "x-442a4b25887b4d23",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
@@ -741,11 +741,11 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     },
     {
-      "fill_id": "sig_b6ae01636279943e02d6e7e0",
-      "client_order_id": "x-55023203eda24eb2",
+      "fill_id": "sig_65e54ba40d222e6b19454bd9",
+      "client_order_id": "x-442a4b25887b4d23",
       "token": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
       "side": "SELL",
       "venue": "paper-dex",
@@ -770,7 +770,7 @@
       "rule_compliance": "COMPLIANT",
       "violations": [],
       "stop_deviation_bps": null,
-      "config_hash": "7608994c9f831251"
+      "config_hash": "791f2fbb51a5c16b"
     }
   ],
   "remaining_uncertainty": [

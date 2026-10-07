@@ -52,6 +52,9 @@ def test_unknown_keys_rejected():
     {"scale_outs": [["0.5", "0.5"]]},  # scale-out above TP
     {"scale_outs": [["0.05", "0.7"], ["0.1", "0.7"]]},  # >100%
     {"stop_loss_pct": "1.5"},
+    {"stop_loss_pct": "0.11"},  # hard limit: stop no wider than 10%
+    {"take_profit_pct": "0.29"},  # hard limit: no profit-taking below 30%
+    {"take_profit_pct": "0.6", "scale_outs": [["0.2", "0.5"]]},  # scale-out below 30%
     {"mode": "live"},  # live without authorization
     {"mode": "live", "live_trading_authorized": True, "trigger_price_source": "indicative"},
     {"max_open_positions": True},  # bool is not an int
@@ -83,3 +86,13 @@ def test_example_config_files():
     with pytest.raises(ConfigError) as e:
         load(str(root / "live.TEMPLATE.toml"))
     assert "missing" in str(e.value) or "null" in str(e.value)
+
+
+def test_hard_limits_are_code_constants():
+    from decimal import Decimal
+
+    from tradebot import config
+    assert config.HARD_MAX_STOP_LOSS_PCT == Decimal("0.10")
+    assert config.HARD_MIN_PROFIT_EXIT_PCT == Decimal("0.30")
+    assert "HARD_MAX_STOP_LOSS_PCT" not in {f for f in config.RiskConfig.__dataclass_fields__}
+    assert paper_config(stop_loss_pct="0.05").stop_loss_pct == Decimal("0.05")  # tighter is allowed
