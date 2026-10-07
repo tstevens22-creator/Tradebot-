@@ -5,7 +5,11 @@ account owner. The values in `config/paper.example.toml` are simulator
 placeholders, **not recommendations**.
 
 ## A. Venue and execution
-1. Which venue(s)? A Solana DEX via an aggregator, specific AMMs, pump.fun-style bonding curves, a CEX, or a mix?
+1. ~~Which venue(s)?~~ **Answered (2026-10-07):** focus on FOMO, pump.fun, and tokens trending on Coinbase.
+   Interpretation (to confirm):
+   - **Execution:** Solana on-chain. (a) pump.fun **bonding curve** for pre-graduation tokens, and (b) the **Jupiter** aggregator for graduated tokens (PumpSwap and other AMMs). Coinbase's in-app Solana DEX trading also routes via Jupiter.
+   - **Signal sources, not venues:** FOMO (a social/copy-trading app; no public trading API found), Coinbase trending/"Launches" (Solana + Base), Birdeye.
+   - **Open:** (1a) include **Base** tokens? Base is an EVM chain and needs a separate execution stack. (1b) trade pump.fun tokens **before** graduation (bonding curve), or only after? (1c) how are FOMO/Coinbase signals captured today: manually, or through some feed?
 2. Which executable-quote source? Birdeye price is indicative only.
 3. Transaction submission path: public RPC, a private/MEV-protected relay, or a bundle service? How many RPCs for reconciliation quorum?
 4. Is there an existing strategy/signal codebase to integrate? Please attach it. Nothing has been audited yet because the repo was empty.

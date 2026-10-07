@@ -16,7 +16,13 @@ What this repository contains instead is a **new, paper-only reference core**,
 written against the hardening specification. Treat it as the target that any real
 strategy/execution code must be integrated into, or measured against.
 
-## Assumed venue and execution model (must be confirmed — see `04_INPUT_CHECKLIST.md`)
+## Venue and execution model
+
+**Owner input (2026-10-07):** focus on FOMO, pump.fun, and tokens trending on Coinbase. FOMO and Coinbase trending are treated as **signal sources**. Execution is on Solana: the pump.fun bonding curve (pre-graduation) and Jupiter (post-graduation; PumpSwap etc.). Remaining open questions are in `04_INPUT_CHECKLIST.md` item 1.
+
+Note: a **bonding curve is not an AMM pool**. It needs its own quote maths and a graduation/migration handler (loss register C6), and pre-graduation tokens carry the highest rug risk.
+
+### Original assumptions
 
 The "Birdeye" data integration implies **Solana spot DEX trading of meme coins**:
 
